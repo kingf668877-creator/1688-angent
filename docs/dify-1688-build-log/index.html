@@ -776,6 +776,26 @@ from datetime import datetime, timedelta
       <li>渲染层（Markdown 表格里的图片）能力应作为链路验收证据之一。</li>
       <li>归档时把每个节点的 prompt / Code / 参数都原样保留下来，避免后续只能凭印象重建。</li>
     </ul>
+
+    <h3>## V2.9 升级记录</h3>
+    <div class="kv">
+      <div>时间</div><div>2026-09-10 21:38</div>
+      <div>下游 Workflow</div><div>1688选品库（<code>9eb8746e-…</code>），发布版 <code>#91</code>（替代旧版 <code>#87</code>）</div>
+      <div>工作流作为工具</div><div><code>1688selector</code>（<code>workflow_tool_id=85e2a0d0-…</code>）同步状态 <span class="pill-ok">synced=true</span></div>
+      <div>Chatflow</div><div>店雷达1688（<code>adba0a12-…</code>）已验证 10 列新版表格</div>
+      <div>改动文件</div><div>商品转表格代码节点（节点 ID <code>1788839166239</code>）</div>
+      <div>字段映射</div><div>
+        <code>consignPrice</code> → "代发价"<br/>
+        <code>province + city</code> → "所在地"<br/>
+        <code>extraMap.positiveRate</code> → <code>buyerRate</code> → <code>positiveRate</code> → "复购率"<br/>
+        商品标题 / 图片 → <code>detail.1688.com/offer/{offerId}.html</code><br/>
+        "进入店铺" → <code>shopUrl</code>
+      </div>
+      <div>表头变更</div><div>
+        旧 9 列（主图 / 标题 / 价格 / 起订 / 销量 / 发货 / 地区 / 公司 / 类目）<br/>
+        → 新 10 列（商品 / 价格 / 采购 / 上架时间 / 近30天数据 / 复购率 / 供应商 / 所在地 / 保障-实力 / 类目-链接）
+      </div>
+    </div>
   </section>
 
   <footer>
@@ -801,5 +821,6 @@ from datetime import datetime, timedelta
     if(sections.indexOf('tab-'+hash)>=0) show(hash); else show('overview');
   })();
 </script>
+<!-- V2.9 update 2026-09-10 21:38 (Asia/Shanghai)：商品转表格节点升级为 10 列新版；下游 Workflow 1688选品库发布版 #91；工作流作为工具 1688selector 同步成功 synced=true；Chatflow 店雷达1688 已验证新版表格。 -->
 </body>
 </html>
