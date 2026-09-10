@@ -1,0 +1,1162 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1280,initial-scale=1" />
+<title>1688 选品库 · 遨虾风格工作台</title>
+<style>/* ============== base ============== */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "WenQuanYi Micro Hei", "Segoe UI", Arial, sans-serif;
+  color: #1f2937;
+  background: #f7f8fb;
+  min-width: 1280px;
+}
+.hidden { display: none !important; }
+.muted { color: #6b7280; font-weight: 400; }
+button { cursor: pointer; font-family: inherit; }
+
+/* ============== topbar ============== */
+.topbar {
+  height: 56px;
+  display: flex; align-items: center; gap: 32px;
+  padding: 0 28px;
+  background: #ffffff;
+  border-bottom: 1px solid #eef0f5;
+  position: sticky; top: 0; z-index: 5;
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.logo {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 10px;
+  background: linear-gradient(135deg,#7c3aed,#4f46e5);
+  color: #fff; font-weight: 700; font-size: 18px;
+}
+.brand-name { font-weight: 700; font-size: 17px; }
+.brand-tag { color: #7c3aed; font-size: 13px; margin-left: 8px; }
+.topnav { display: flex; gap: 24px; margin-left: 32px; }
+.topnav a {
+  color: #374151; text-decoration: none; font-size: 14px; padding: 6px 4px;
+  border-bottom: 2px solid transparent;
+}
+.topnav a.active { color: #7c3aed; border-color: #7c3aed; }
+
+/* ============== ask area ============== */
+.ask { padding: 28px 28px 8px; }
+.ask-card {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid #e8eaf2;
+  border-radius: 14px;
+  box-shadow: 0 6px 22px rgba(60,40,140,0.06);
+  padding: 16px 18px 18px;
+  max-width: 1080px; margin: 0 auto;
+}
+.ask-context { display: flex; align-items: center; gap: 8px; color: #4b5563; font-size: 14px; margin-bottom: 10px; }
+.chip {
+  display: inline-block; padding: 3px 10px; border-radius: 999px;
+  background: #f3eefe; color: #6d28d9; font-size: 12px;
+}
+.ask-input {
+  min-height: 28px; max-height: 140px; overflow: auto;
+  font-size: 15px; line-height: 1.7;
+  outline: none; padding: 4px 36px 4px 4px;
+}
+.ask-input:empty::before {
+  content: attr(data-placeholder); color: #9aa1ad;
+}
+.ask-send {
+  position: absolute; right: 14px; bottom: 14px;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: #7c3aed; color: #fff; border: none; font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+}
+.ask-send:hover { background: #6d28d9; }
+.ask-examples {
+  max-width: 1080px; margin: 14px auto 0;
+  display: flex; flex-wrap: wrap; gap: 10px;
+}
+.ask-example {
+  padding: 6px 12px; background: #ffffff; border: 1px solid #e8eaf2;
+  border-radius: 999px; font-size: 13px; color: #4b5563;
+}
+.ask-example:hover { border-color: #7c3aed; color: #6d28d9; }
+
+/* ============== planner ============== */
+.planner {
+  max-width: 1080px; margin: 16px auto; padding: 14px 18px;
+  background: #ffffff; border: 1px solid #eef0f5; border-radius: 12px;
+}
+.planner-title { font-weight: 600; color: #4b5563; margin-bottom: 8px; font-size: 14px; }
+.planner-steps {
+  list-style: none; padding: 0; margin: 0;
+  display: grid; grid-template-columns: repeat(5,1fr); gap: 10px;
+}
+.planner-steps li {
+  border: 1px dashed #e5e7eb; border-radius: 10px;
+  padding: 10px 12px; display: flex; flex-direction: column; gap: 6px;
+  background: #fafbff;
+}
+.planner-steps li.active { border-style: solid; border-color: #c4b5fd; background: #f5f3ff; }
+.planner-steps li.done .dot { background: #16a34a; }
+.planner-steps .dot {
+  width: 10px; height: 10px; border-radius: 50%; background: #d1d5db;
+  display: inline-block;
+}
+.planner-steps li.active .dot { background: #7c3aed; animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100% {transform:scale(1);} 50% {transform:scale(1.4);} }
+.planner-steps .label { font-weight: 600; font-size: 13px; }
+.planner-steps .hint { color: #6b7280; font-size: 12px; }
+
+/* ============== result head ============== */
+.result { padding: 12px 28px 60px; max-width: 1240px; margin: 0 auto; }
+.result-head {
+  background: linear-gradient(135deg,#faf5ff,#eef2ff);
+  border: 1px solid #ede9fe; border-radius: 14px;
+  padding: 18px 22px; display: flex; justify-content: space-between; gap: 24px;
+  align-items: flex-start;
+}
+.summary-block { max-width: 760px; }
+.summary-block h2 { margin: 0 0 6px; font-size: 18px; }
+.summary-text { color: #374151; font-size: 14px; line-height: 1.8; margin: 0; }
+.followups { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.followups .chip { background: #ede9fe; color: #5b21b6; }
+
+.result-actions { display: flex; gap: 10px; align-items: flex-start; }
+.primary-btn {
+  background: #7c3aed; color: #fff; border: none; padding: 10px 16px;
+  border-radius: 10px; font-size: 14px;
+}
+.primary-btn:hover { background: #6d28d9; }
+.ghost-btn {
+  background: #ffffff; color: #374151; border: 1px solid #e5e7eb;
+  padding: 9px 14px; border-radius: 10px; font-size: 13px;
+}
+.ghost-btn:hover { border-color: #7c3aed; color: #6d28d9; }
+.ghost-btn.small { padding: 6px 10px; font-size: 12px; }
+
+/* ============== toolbar ============== */
+.toolbar {
+  margin: 16px 0 8px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center;
+}
+.view-toggle { display: inline-flex; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; }
+.view-toggle .seg { background: #fff; border: none; padding: 8px 14px; font-size: 13px; color: #374151; }
+.view-toggle .seg.active { background: #7c3aed; color: #fff; }
+.filters, .sort { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.filters label, .sort label { font-size: 13px; color: #4b5563; display: flex; align-items: center; gap: 6px; }
+.filters select, .sort select {
+  padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 8px;
+  font-size: 13px; background: #fff;
+}
+
+/* ============== counts ============== */
+.counts {
+  display: flex; gap: 18px; align-items: center;
+  padding: 6px 4px; font-size: 13px; color: #4b5563;
+}
+.counts label { display: flex; align-items: center; gap: 6px; }
+
+/* ============== grid (card view) ============== */
+.grid {
+  display: grid; grid-template-columns: repeat(4,1fr); gap: 14px;
+  margin-top: 6px;
+}
+.product-card {
+  background: #fff; border: 1px solid #eef0f5; border-radius: 12px;
+  overflow: hidden; display: flex; flex-direction: column;
+  transition: transform .15s, box-shadow .15s;
+}
+.product-card:hover { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(60,40,140,0.08); }
+.product-card .thumb { aspect-ratio: 1/1; background: #f3f4f6; }
+.product-card .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.product-card .body { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 6px; }
+.product-card .title { font-size: 13px; line-height: 1.45; height: 38px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.product-card .meta { display: flex; gap: 8px; font-size: 12px; color: #6b7280; align-items: center; }
+.product-card .price { color: #ef4444; font-weight: 700; font-size: 16px; }
+.product-card .stats { display: flex; justify-content: space-between; font-size: 12px; color: #4b5563; }
+.product-card .check-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6b7280; padding: 0 12px 8px; }
+
+/* ============== table (list view) ============== */
+.data-table {
+  width: 100%; border-collapse: collapse; background: #fff;
+  border: 1px solid #eef0f5; border-radius: 12px; overflow: hidden;
+}
+.data-table th, .data-table td {
+  padding: 10px 12px; font-size: 13px; border-bottom: 1px solid #f1f2f6;
+  vertical-align: middle;
+}
+.data-table th { background: #f9fafb; color: #4b5563; font-weight: 600; text-align: left; }
+.data-table td.ck, .data-table th.ck { width: 36px; text-align: center; }
+.data-table td.img img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; background: #f3f4f6; }
+.data-table tr:hover { background: #fafbff; }
+.data-table tr.checked { background: #f5f3ff; }
+
+/* ============== pager ============== */
+.pager {
+  margin-top: 16px; display: flex; gap: 10px; align-items: center;
+  padding: 10px 14px; background: #fff; border: 1px solid #eef0f5;
+  border-radius: 10px;
+}
+.pager select { padding: 4px 8px; border: 1px solid #e5e7eb; border-radius: 8px; }
+
+/* ============== toast ============== */
+.toast {
+  position: fixed; left: 50%; bottom: 36px; transform: translateX(-50%);
+  background: #111827; color: #fff; padding: 10px 18px; border-radius: 999px;
+  font-size: 13px; opacity: 0; transition: opacity .25s;
+  pointer-events: none; z-index: 999;
+}
+.toast.show { opacity: 1; }</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">α</span>
+    <span class="brand-name">1688 选品库</span>
+    <span class="brand-tag">蓝海 · 热点 · 改款 · 直出专家选品</span>
+  </div>
+  <nav class="topnav">
+    <a class="active" href="#">选品 Agent</a>
+    <a href="#">案例库</a>
+    <a href="#">选品历史</a>
+    <a href="#">设置</a>
+  </nav>
+</header>
+
+<section class="ask">
+  <div class="ask-card">
+    <div class="ask-context">
+      <span>我关注的是</span>
+      <span class="chip">平台：1688</span>
+      <span class="chip">类目：默认全类目</span>
+    </div>
+    <div id="ask-input" class="ask-input" contenteditable="true" data-placeholder="如：近30天上架的万圣节产品 / 邂逅花园系列 / 毛绒玩具"></div>
+    <button id="ask-send" class="ask-send" title="发送（回车提交）">↑</button>
+  </div>
+  <div id="ask-examples" class="ask-examples"></div>
+</section>
+
+<section id="json-panel" class="ask hidden">
+  <div class="ask-card">
+    <div class="ask-context">
+      <span>粘贴 Dify 工作流输出：</span>
+      <span class="chip">把工作流 result 里 ```json``` 代码块复制到下面</span>
+    </div>
+    <textarea id="json-input" style="width:100%;height:160px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;border:1px solid #e5e7eb;border-radius:10px;padding:10px;" placeholder='{"keyword":"...","summary":"...","finalItems":[]}'></textarea>
+    <div style="display:flex;gap:10px;margin-top:10px;">
+      <button id="json-load" class="primary-btn">载入并预览</button>
+      <button id="json-sample" class="ghost-btn">载入示例数据</button>
+    </div>
+  </div>
+</section>
+
+<section id="planner" class="planner hidden">
+  <div class="planner-title">任务规划</div>
+  <ol class="planner-steps">
+    <li data-step="understand"><span class="dot"></span><span class="label">需求理解</span><span class="hint">分析搜索词、识别系列 / 人群 / 场景</span></li>
+    <li data-step="queries"><span class="dot"></span><span class="label">查询词拆解</span><span class="hint">生成 5 层查询词（核心 / 修饰 / 系列 / 人群 / 场景）</span></li>
+    <li data-step="search"><span class="dot"></span><span class="label">调用店雷达</span><span class="hint">逐层调用接口、按类目与模糊词过滤</span></li>
+    <li data-step="rank"><span class="dot"></span><span class="label">去重 + 排序</span><span class="hint">按 30 天销量、机会分、上架时间综合排序</span></li>
+    <li data-step="report"><span class="dot"></span><span class="label">撰写报告</span><span class="hint">生成一句话摘要、商品列表、追问建议</span></li>
+  </ol>
+</section>
+
+<main id="result" class="result hidden">
+
+  <header class="result-head">
+    <div class="summary-block">
+      <h2 id="r-summary-title">选品推荐</h2>
+      <p id="r-summary-text" class="summary-text"></p>
+      <div id="r-followups" class="followups"></div>
+    </div>
+    <div class="result-actions">
+      <button id="btn-feedback-like" class="ghost-btn">👍 喜欢</button>
+      <button id="btn-feedback-dislike" class="ghost-btn">👎 不喜欢</button>
+      <button id="btn-export-csv" class="primary-btn">⬇ 导出选中为 CSV</button>
+    </div>
+  </header>
+
+  <section class="toolbar">
+    <div class="view-toggle">
+      <button data-view="card" class="seg active">大图模式</button>
+      <button data-view="list" class="seg">列表模式</button>
+    </div>
+    <div class="filters">
+      <label>价格
+        <select id="f-price">
+          <option value="">不限</option>
+          <option value="0-10">≤ 10 元</option>
+          <option value="10-30">10 - 30 元</option>
+          <option value="30-60">30 - 60 元</option>
+          <option value="60-">≥ 60 元</option>
+        </select>
+      </label>
+      <label>月销量
+        <select id="f-sales">
+          <option value="">不限</option>
+          <option value="0-100">≤ 100</option>
+          <option value="100-500">100 - 500</option>
+          <option value="500-1000">500 - 1000</option>
+          <option value="1000-">≥ 1000</option>
+        </select>
+      </label>
+      <label>评分
+        <select id="f-rating">
+          <option value="">不限</option>
+          <option value="4.5">≥ 4.5</option>
+          <option value="4.0">≥ 4.0</option>
+        </select>
+      </label>
+      <label>上架时间
+        <select id="f-listed">
+          <option value="">不限</option>
+          <option value="30">近 30 天</option>
+          <option value="90">近 90 天</option>
+        </select>
+      </label>
+      <button id="f-clear" class="ghost-btn small">清空筛选</button>
+    </div>
+    <div class="sort">
+      <label>排序
+        <select id="s-key">
+          <option value="sales30d_desc">按 30 天销量 ↓</option>
+          <option value="sales_desc">按月销量 ↓</option>
+          <option value="price_asc">按价格 ↑</option>
+          <option value="price_desc">按价格 ↓</option>
+          <option value="listed_desc">按上架时间 ↓</option>
+          <option value="rating_desc">按评分 ↓</option>
+        </select>
+      </label>
+    </div>
+  </section>
+
+  <section class="counts">
+    <span id="c-total">共 0 条结果</span>
+    <span id="c-selected" class="muted">已选 0 条</span>
+    <label class="muted"><input type="checkbox" id="c-all-current" /> 全选当前页</label>
+  </section>
+
+  <section id="grid" class="grid card-view"></section>
+  <section id="table" class="hidden">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th class="ck"><input type="checkbox" id="t-head-ck" /></th>
+          <th>#</th>
+          <th>主图</th>
+          <th>标题</th>
+          <th>价格</th>
+          <th>月销量</th>
+          <th>30天销量</th>
+          <th>评分</th>
+          <th>上架时间</th>
+          <th>类目</th>
+          <th>链接</th>
+        </tr>
+      </thead>
+      <tbody id="t-body"></tbody>
+    </table>
+  </section>
+
+  <footer class="pager">
+    <button id="p-prev" class="ghost-btn">上一页</button>
+    <span id="p-info">第 1 / 1 页</span>
+    <button id="p-next" class="ghost-btn">下一页</button>
+    <span class="muted">每页</span>
+    <select id="p-size">
+      <option>10</option>
+      <option selected>20</option>
+      <option>50</option>
+    </select>
+    <span class="muted">条</span>
+  </footer>
+
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script>window.__SAMPLE = {
+  "keyword": "近30天上架的万圣节产品",
+  "summary": "本次推荐聚焦美国亚马逊近30天（2026-08-08 后）上架的万圣节新品，共筛选出 20 款符合条件商品。推荐策略以新品机会分高、近 30 天销量 ≥ 20 为核心，覆盖服装（卫衣、毛衣、睡衣、短裤）、配饰（耳环、手链）及成人服饰套装等多个子类目。商品价格区间为 ¥5.99–¥17.99，其中多款睡衣和卫衣销量突出。核心发现：万圣节服饰类新品机会分普遍高于 90%，轻小件如耳环、手链具备高倍率定价潜力。风险提示：部分商品评论数为 0，需关注实际用户反馈及节后库存风险。",
+  "followups": [
+    "万圣节睡衣类目有哪些爆款可跟卖？",
+    "高机会分卫衣新品的痛点是什么？",
+    "耳环手链类如何优化 Listing？"
+  ],
+  "queries": [
+    { "name": "halloween pajamas women", "count": 8 },
+    { "name": "halloween sweater women", "count": 6 },
+    { "name": "halloween costume women", "count": 4 },
+    { "name": "halloween jewelry", "count": 2 }
+  ],
+  "finalItems": [
+    {
+      "id": "B0HH2V66T5",
+      "title": "Halloween Pajamas Women 2 Piece Fall Cute Ghost Pumpkin Pajama Sets Soft Long Sleeve Pjs Party Spooky Costumes",
+      "image": "https://placehold.co/300x300/7c3aed/ffffff?text=Pajama+Set",
+      "price": 76.8,
+      "sales": 1029,
+      "sales30d": 1029,
+      "rating": 5,
+      "listedAt": "2026-08-27",
+      "category": "睡衣/家居服",
+      "url": "https://detail.1688.com/offer/600000.html",
+      "shop": "潮趣服饰有限公司"
+    },
+    {
+      "id": "B0HF4L4D5V",
+      "title": "OHOME Halloween Party Favors - 6 Pack HALLOWEEN Bracelets Halloween Games Treats Toys Gifts Crafts Party Supplies for Kids",
+      "image": "https://placehold.co/300x300/ef4444/ffffff?text=Bracelet",
+      "price": 42.9,
+      "sales": 639,
+      "sales30d": 639,
+      "rating": 4.5,
+      "listedAt": "2026-08-13",
+      "category": "节日饰品/手链",
+      "url": "https://detail.1688.com/offer/600001.html",
+      "shop": "万圣节派对工厂"
+    },
+    {
+      "id": "B0HFJ3J4C5",
+      "title": "7 Pcs Halloween Costumes for Adults, Funny Adult Costumes for Women",
+      "image": "https://placehold.co/300x300/22c55e/ffffff?text=Costume",
+      "price": 119.0,
+      "sales": 453,
+      "sales30d": 453,
+      "rating": 4,
+      "listedAt": "2026-08-17",
+      "category": "成人服饰套装",
+      "url": "https://detail.1688.com/offer/600002.html",
+      "shop": "趣派对服饰"
+    },
+    {
+      "id": "B0HH4HXMC6",
+      "title": "Halloween Sweaters for Women Casual Knitted Cardigan Pullover Cute Pumpkin Graphic Fall Button Down Tops",
+      "image": "https://placehold.co/300x300/f59e0b/ffffff?text=Sweater",
+      "price": 48.5,
+      "sales": 290,
+      "sales30d": 290,
+      "rating": 3.4,
+      "listedAt": "2026-08-27",
+      "category": "针织毛衣",
+      "url": "https://detail.1688.com/offer/600003.html",
+      "shop": "暖意服饰厂"
+    },
+    {
+      "id": "B0HG2281FC",
+      "title": "Halloween Sweatshirt for Women Spooky Season Cute Tops Ghost Graphic Pullover",
+      "image": "https://placehold.co/300x300/3b82f6/ffffff?text=Sweatshirt",
+      "price": 69.9,
+      "sales": 276,
+      "sales30d": 276,
+      "rating": 5,
+      "listedAt": "2026-08-21",
+      "category": "卫衣",
+      "url": "https://detail.1688.com/offer/600004.html",
+      "shop": "幽灵工厂店"
+    },
+    {
+      "id": "B0HFN7D68T",
+      "title": "Halloween Sweaters Knitted Cardigan Button Tops Cute Pumpkin Graphic Fall Button Down Tops Witch And Skull Print",
+      "image": "https://placehold.co/300x300/8b5cf6/ffffff?text=Pumpkin+Knit",
+      "price": 69.9,
+      "sales": 224,
+      "sales30d": 224,
+      "rating": 5,
+      "listedAt": "2026-08-18",
+      "category": "针织毛衣",
+      "url": "https://detail.1688.com/offer/600005.html",
+      "shop": "南瓜针织厂"
+    },
+    {
+      "id": "B0HF8RKWWD",
+      "title": "COTECRAM Halloween Sweatshirt Salem Broom Company Printed Pullover Vintage Witch Moon Crewneck Sweater",
+      "image": "https://placehold.co/300x300/14b8a6/ffffff?text=Witch+Sweater",
+      "price": 104.9,
+      "sales": 177,
+      "sales30d": 177,
+      "rating": 5,
+      "listedAt": "2026-08-14",
+      "category": "卫衣",
+      "url": "https://detail.1688.com/offer/600006.html",
+      "shop": "复古卫衣坊"
+    },
+    {
+      "id": "B0HF7L9M5R",
+      "title": "Halloween Shorts Women Holiday Party Casual Baggy Halloween Print Shorts Funny Pattern Party",
+      "image": "https://placehold.co/300x300/eab308/ffffff?text=Halloween+Shorts",
+      "price": 62.9,
+      "sales": 172,
+      "sales30d": 172,
+      "rating": 5,
+      "listedAt": "2026-08-14",
+      "category": "短裤",
+      "url": "https://detail.1688.com/offer/600007.html",
+      "shop": "派对短裤直营"
+    },
+    {
+      "id": "B0HG52ZLWT",
+      "title": "Halloween Earrings for Women Gothic Jewelry Witch Skeleton Spider Pumpkin Ghost Bat Dangle Earrings Set",
+      "image": "https://placehold.co/300x300/dc2626/ffffff?text=Earrings",
+      "price": 56.6,
+      "sales": 168,
+      "sales30d": 168,
+      "rating": 4.5,
+      "listedAt": "2026-08-22",
+      "category": "耳环/饰品",
+      "url": "https://detail.1688.com/offer/600008.html",
+      "shop": "暗夜饰品"
+    },
+    {
+      "id": "B0HDTV387M",
+      "title": "midelxp Halloween Pajama Pants Women Comfy Loose Fit Jogger Pajama Bottoms Pumpkin Ghost Graphic",
+      "image": "https://placehold.co/300x300/0ea5e9/ffffff?text=PJ+Pants",
+      "price": 69.9,
+      "sales": 156,
+      "sales30d": 156,
+      "rating": 5,
+      "listedAt": "2026-08-11",
+      "category": "睡衣/家居服",
+      "url": "https://detail.1688.com/offer/600009.html",
+      "shop": "舒适家居"
+    },
+    {
+      "id": "B0HDT1GXQT",
+      "title": "Women Halloween Shirt Boho Bell Sleeve Crewneck Graphic Top Floral Skeleton Ribcage Print Gothic Blouse",
+      "image": "https://placehold.co/300x300/a855f7/ffffff?text=Shirt",
+      "price": 62.8,
+      "sales": 137,
+      "sales30d": 137,
+      "rating": 5,
+      "listedAt": "2026-08-11",
+      "category": "上衣",
+      "url": "https://detail.1688.com/offer/600010.html",
+      "shop": "波西米亚女装"
+    },
+    {
+      "id": "B0HH3ABCDE",
+      "title": "Halloween Sweatshirts for Women 2026 Pumpkin Ghost Funny Pullover Tops Long Sleeve Crewneck",
+      "image": "https://placehold.co/300x300/f97316/ffffff?text=Pumpkin",
+      "price": 79.9,
+      "sales": 121,
+      "sales30d": 121,
+      "rating": 4.8,
+      "listedAt": "2026-08-19",
+      "category": "卫衣",
+      "url": "https://detail.1688.com/offer/600011.html",
+      "shop": "南瓜精选店"
+    },
+    {
+      "id": "B0HGZ9KLMN",
+      "title": "Womens Halloween Costume Witch Dress Long Sleeve Gothic Vintage Costume Party Dress",
+      "image": "https://placehold.co/300x300/be185d/ffffff?text=Witch+Dress",
+      "price": 158.0,
+      "sales": 98,
+      "sales30d": 98,
+      "rating": 4.7,
+      "listedAt": "2026-08-15",
+      "category": "女装连衣裙",
+      "url": "https://detail.1688.com/offer/600012.html",
+      "shop": "哥特女装工厂"
+    },
+    {
+      "id": "B0HH5QRSTU",
+      "title": "Halloween Necklace Set Pumpkin Ghost Bat Pendant Stainless Steel Chain Jewelry",
+      "image": "https://placehold.co/300x300/65a30d/ffffff?text=Necklace",
+      "price": 39.9,
+      "sales": 87,
+      "sales30d": 87,
+      "rating": 4.6,
+      "listedAt": "2026-08-20",
+      "category": "项链/饰品",
+      "url": "https://detail.1688.com/offer/600013.html",
+      "shop": "不锈钢饰品厂"
+    },
+    {
+      "id": "B0HF6VWXYZ",
+      "title": "Halloween Tote Bag Canvas Halloween Print Tote Reusable Shopping Bag",
+      "image": "https://placehold.co/300x300/0891b2/ffffff?text=Tote+Bag",
+      "price": 28.5,
+      "sales": 76,
+      "sales30d": 76,
+      "rating": 4.4,
+      "listedAt": "2026-08-12",
+      "category": "包/袋",
+      "url": "https://detail.1688.com/offer/600014.html",
+      "shop": "帆布包工厂"
+    },
+    {
+      "id": "B0HG7LMNOP",
+      "title": "Halloween Socks Women Cute Ghost Pumpkin Crew Socks Novelty Cotton Knit",
+      "image": "https://placehold.co/300x300/9333ea/ffffff?text=Socks",
+      "price": 18.9,
+      "sales": 64,
+      "sales30d": 64,
+      "rating": 4.5,
+      "listedAt": "2026-08-10",
+      "category": "袜子",
+      "url": "https://detail.1688.com/offer/600015.html",
+      "shop": "趣味袜子厂"
+    },
+    {
+      "id": "B0HH8QRSTU",
+      "title": "Halloween Throw Pillow Cover 18x18 Spooky Ghost Cushion Case Home Decor",
+      "image": "https://placehold.co/300x300/ca8a04/ffffff?text=Pillow",
+      "price": 26.5,
+      "sales": 53,
+      "sales30d": 53,
+      "rating": 4.3,
+      "listedAt": "2026-08-22",
+      "category": "家居抱枕",
+      "url": "https://detail.1688.com/offer/600016.html",
+      "shop": "节日家居"
+    },
+    {
+      "id": "B0HF9VWXYZ",
+      "title": "Halloween Stickers Pack 50pcs Waterproof Vinyl Decals for Laptop Water Bottle",
+      "image": "https://placehold.co/300x300/16a34a/ffffff?text=Stickers",
+      "price": 15.9,
+      "sales": 48,
+      "sales30d": 48,
+      "rating": 4.2,
+      "listedAt": "2026-08-09",
+      "category": "贴纸",
+      "url": "https://detail.1688.com/offer/600017.html",
+      "shop": "贴纸直营店"
+    },
+    {
+      "id": "B0HGALMNOP",
+      "title": "Halloween Kids Costume Toddler Boys Girls Dragon Dinosaur Onesie Animal Pajamas",
+      "image": "https://placehold.co/300x300/ea580c/ffffff?text=Kids+Costume",
+      "price": 99.0,
+      "sales": 41,
+      "sales30d": 41,
+      "rating": 4.7,
+      "listedAt": "2026-08-23",
+      "category": "儿童服饰",
+      "url": "https://detail.1688.com/offer/600018.html",
+      "shop": "童趣服饰厂"
+    },
+    {
+      "id": "B0HHB12345",
+      "title": "Halloween LED String Lights 10ft Pumpkin Ghost Battery Operated Decorative Lights",
+      "image": "https://placehold.co/300x300/db2777/ffffff?text=LED+Lights",
+      "price": 35.0,
+      "sales": 33,
+      "sales30d": 33,
+      "rating": 4.1,
+      "listedAt": "2026-08-08",
+      "category": "节日灯饰",
+      "url": "https://detail.1688.com/offer/600019.html",
+      "shop": "节日装饰店"
+    }
+  ]
+};/* 1688 选品库 · 独立工作台
+ * 数据契约：{ keyword, summary, queries:[{name,count,items}], finalItems:[...] }
+ * 不再依赖 Dify 渲染内联脚本 —— 所有交互在这里原生实现。
+ */
+
+(function () {
+  "use strict";
+
+  // ---------------- state ----------------
+  const state = {
+    keyword: "",
+    summary: "",
+    followups: [],
+    items: [],          // finalItems 或 平铺 queries[*].items
+    selected: new Set(), // 已选商品 id（跨页保留）
+    view: "card",       // "card" | "list"
+    page: 1,
+    pageSize: 20,
+    sort: "sales30d_desc",
+    filters: { price: "", sales: "", rating: "", listed: "" }
+  };
+
+  // ---------------- dom ----------------
+  const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+  const ui = {
+    askInput: $("#ask-input"),
+    askSend: $("#ask-send"),
+    askExamples: $("#ask-examples"),
+    planner: $("#planner"),
+    result: $("#result"),
+    summaryTitle: $("#r-summary-title"),
+    summaryText: $("#r-summary-text"),
+    followups: $("#r-followups"),
+    btnLike: $("#btn-feedback-like"),
+    btnDislike: $("#btn-feedback-dislike"),
+    btnExport: $("#btn-export-csv"),
+    grid: $("#grid"),
+    table: $("#table"),
+    tBody: $("#t-body"),
+    tHeadCk: $("#t-head-ck"),
+    total: $("#c-total"),
+    selected: $("#c-selected"),
+    allCurrent: $("#c-all-current"),
+    pPrev: $("#p-prev"),
+    pNext: $("#p-next"),
+    pInfo: $("#p-info"),
+    pSize: $("#p-size"),
+    fPrice: $("#f-price"),
+    fSales: $("#f-sales"),
+    fRating: $("#f-rating"),
+    fListed: $("#f-listed"),
+    fClear: $("#f-clear"),
+    sKey: $("#s-key"),
+    toast: $("#toast"),
+    jsonPanel: $("#json-panel"),
+    jsonInput: $("#json-input"),
+    jsonLoad: $("#json-load"),
+    jsonSample: $("#json-sample")
+  };
+
+  // ---------------- example suggestions ----------------
+  const EXAMPLES = [
+    "近30天上架的万圣节产品",
+    "邂逅花园系列",
+    "毛绒玩具",
+    "大码连衣裙",
+    "男士休闲外套"
+  ];
+  function renderExamples() {
+    ui.askExamples.innerHTML = "";
+    EXAMPLES.forEach((q) => {
+      const b = document.createElement("button");
+      b.className = "ask-example";
+      b.textContent = q;
+      b.addEventListener("click", () => {
+        ui.askInput.innerText = q;
+        submit();
+      });
+      ui.askExamples.appendChild(b);
+    });
+  }
+
+  // ---------------- submit / planner ----------------
+  async function submit() {
+    const text = (ui.askInput.innerText || "").trim();
+    if (!text) { toast("请输入搜索词"); return; }
+    state.keyword = text;
+    state.selected = new Set();
+    state.page = 1;
+    showPlanner(true);
+    runPlannerAnim();
+    const payload = { keyword: text };
+    try {
+      // 真实接入：POST 到你的 Dify WebApp /workflows/run
+      // 这里为了本地可演示，先用样例数据。
+      const data = await loadData(payload);
+      if (!data || (!data.finalItems && !(data.queries||[]).length)) {
+        showJsonPanel(true);
+        runPlannerAnim(false);
+        toast("未取到数据，请粘贴 Dify 工作流 JSON");
+        return;
+      }
+      renderResult(data);
+    } catch (e) {
+      toast("出错了：" + (e.message || e));
+      showJsonPanel(true);
+      runPlannerAnim(false);
+    }
+  }
+
+  function showPlanner(yes) { ui.planner.classList.toggle("hidden", !yes); }
+  function showJsonPanel(yes) { if (ui.jsonPanel) ui.jsonPanel.classList.toggle("hidden", !yes); }
+
+  function runPlannerAnim(start) {
+    if (start === false) {
+      const steps = $$(".planner-steps li");
+      steps.forEach((s) => s.classList.remove("active"));
+      return;
+    }
+    const steps = $$(".planner-steps li");
+    steps.forEach((s) => s.classList.remove("active", "done"));
+    let i = 0;
+    const tick = () => {
+      if (i >= steps.length) return;
+      steps.forEach((s, idx) => {
+        s.classList.remove("active");
+        if (idx < i) s.classList.add("done");
+      });
+      if (i < steps.length) steps[i].classList.add("active");
+      i++;
+      setTimeout(tick, 600);
+    };
+    tick();
+  }
+
+  // ---------------- data ----------------
+  async function loadData(payload) {
+    // 真实接入 Dify 工作流（方式 A —— 后端代理）：
+    // const res = await fetch("/api/run", {
+    //   method:"POST", headers:{"Content-Type":"application/json"},
+    //   body: JSON.stringify(payload)
+    // });
+    // const j = await res.json();
+    // return j.result || j;
+
+    // 真实接入 Dify 工作流（方式 B —— 直接拿最新一次运行的输出 JSON）：
+    //   Dify 没有稳定的“查询运行结果”接口，所以推荐方式 A；
+    //   这里默认走本地样例，方便你离线验证。
+    // 单文件模式（双击 HTML 打开时）：样例 JSON 已经内联在 window.__SAMPLE
+    if (window.__SAMPLE) return JSON.parse(JSON.stringify(window.__SAMPLE));
+    // 多文件模式（http server 提供）：从 sample_data.json 读取
+    try {
+      const res = await fetch("sample_data.json", { cache: "no-store" });
+      if (res.ok) return await res.json();
+    } catch (e) {}
+    // 兜底
+    return { keyword: payload?.keyword || "", summary: "", followups: [], queries: [], finalItems: [] };
+  }
+
+  function renderResult(data) {
+    // 兼容 Dify 节点直接输出 payload 或包成 {result: payload}
+    const payload = (data && data.result) ? data.result : data;
+    data = payload;
+    state.keyword = data.keyword || state.keyword;
+    state.summary = data.summary || "";
+    state.followups = data.followups || [];
+    state.items = (data.finalItems && data.finalItems.length ? data.finalItems : flattenQueries(data.queries))
+      .map(normalizeItem);
+    showPlanner(false);
+    ui.result.classList.remove("hidden");
+    ui.summaryTitle.textContent = `选品推荐 · ${state.keyword}`;
+    ui.summaryText.textContent = state.summary;
+    renderFollowups();
+    renderAll();
+    window.scrollTo({ top: ui.result.offsetTop - 20, behavior: "smooth" });
+  }
+
+  function flattenQueries(queries) {
+    if (!queries || !queries.length) return [];
+    return queries.flatMap((q) => (q.items || []).map((it) => ({ ...it, _query: q.name })));
+  }
+
+  function normalizeItem(it) {
+    return {
+      id: String(it.id || it.itemId || it.item_id || it.url || it.title || Math.random()),
+      title: it.title || it.subject || "",
+      image: it.image || it.pic || it.img || "",
+      price: Number(it.price) || 0,
+      sales: Number(it.sales || it.salesTotal || it.monthSales) || 0,
+      sales30d: Number(it.sales30d || it.orderCount30d || it.sales_30d) || 0,
+      rating: Number(it.rating || it.score) || 0,
+      listedAt: it.listedAt || it.publishTime || it.addTime || it.listed_at || "",
+      category: it.category || it.catName || "",
+      url: it.url || it.detailUrl || it.link || "",
+      shop: it.shop || it.shopName || "",
+      query: it._query || it.query || ""
+    };
+  }
+
+  function renderFollowups() {
+    ui.followups.innerHTML = "";
+    state.followups.forEach((q) => {
+      const c = document.createElement("span");
+      c.className = "chip";
+      c.textContent = q;
+      c.addEventListener("click", () => { ui.askInput.innerText = q; submit(); });
+      ui.followups.appendChild(c);
+    });
+  }
+
+  // ---------------- filter / sort ----------------
+  function getFilteredSortedItems() {
+    let arr = state.items.slice();
+    const f = state.filters;
+
+    if (f.price) {
+      const [a, b] = f.price.split("-").map((v) => v === "" ? null : Number(v));
+      arr = arr.filter((x) => b == null ? x.price >= a : (x.price >= a && x.price <= b));
+    }
+    if (f.sales) {
+      const [a, b] = f.sales.split("-").map((v) => v === "" ? null : Number(v));
+      arr = arr.filter((x) => b == null ? x.sales >= a : (x.sales >= a && x.sales <= b));
+    }
+    if (f.rating) { arr = arr.filter((x) => x.rating >= Number(f.rating)); }
+    if (f.listed) {
+      const days = Number(f.listed);
+      const cutoff = Date.now() - days * 86400e3;
+      arr = arr.filter((x) => x.listedAt && new Date(x.listedAt).getTime() >= cutoff);
+    }
+
+    const cmp = {
+      sales30d_desc: (a, b) => b.sales30d - a.sales30d,
+      sales_desc: (a, b) => b.sales - a.sales,
+      price_asc: (a, b) => a.price - b.price,
+      price_desc: (a, b) => b.price - a.price,
+      listed_desc: (a, b) => new Date(b.listedAt || 0) - new Date(a.listedAt || 0),
+      rating_desc: (a, b) => b.rating - a.rating
+    }[state.sort] || ((a, b) => b.sales30d - a.sales30d);
+
+    return arr.sort(cmp);
+  }
+
+  // ---------------- render ----------------
+  function renderAll() {
+    const all = getFilteredSortedItems();
+    ui.total.textContent = `共 ${all.length} 条结果`;
+    ui.selected.textContent = `已选 ${state.selected.size} 条`;
+    renderGrid(all);
+    renderTable(all);
+    renderPager(all.length);
+    syncAllCurrentCheckbox(all);
+  }
+
+  function paginate(items) {
+    const start = (state.page - 1) * state.pageSize;
+    return items.slice(start, start + state.pageSize);
+  }
+
+  function renderGrid(all) {
+    const page = paginate(all);
+    ui.grid.innerHTML = "";
+    page.forEach((it, idx) => {
+      const card = document.createElement("div");
+      card.className = "product-card";
+      card.innerHTML = `
+        <div class="thumb"><img loading="lazy" src="${escapeAttr(it.image)}" onerror="this.style.opacity=0" alt=""></div>
+        <div class="body">
+          <div class="title">${escapeHTML(it.title)}</div>
+          <div class="stats">
+            <span class="price">¥${fmtPrice(it.price)}</span>
+            <span>30天销量 ${it.sales30d}</span>
+          </div>
+          <div class="meta">
+            <span>评分 ${it.rating || "-"}</span>
+            <span>·</span>
+            <span>${escapeHTML(it.listedAt || "上架时间未知")}</span>
+          </div>
+        </div>
+        <label class="check-row">
+          <input type="checkbox" data-id="${escapeAttr(it.id)}" class="ck-item" ${state.selected.has(it.id) ? "checked" : ""}/>
+          选入导出
+        </label>`;
+      ui.grid.appendChild(card);
+    });
+    bindCardChecks();
+  }
+
+  function bindCardChecks() {
+    $$(".grid .ck-item").forEach((ck) => {
+      ck.addEventListener("change", (e) => {
+        const id = e.target.getAttribute("data-id");
+        if (e.target.checked) state.selected.add(id);
+        else state.selected.delete(id);
+        ui.selected.textContent = `已选 ${state.selected.size} 条`;
+      });
+    });
+  }
+
+  function renderTable(all) {
+    const page = paginate(all);
+    ui.tBody.innerHTML = "";
+    page.forEach((it, idx) => {
+      const tr = document.createElement("tr");
+      tr.setAttribute("data-id", it.id);
+      tr.className = state.selected.has(it.id) ? "checked" : "";
+      tr.innerHTML = `
+        <td class="ck"><input type="checkbox" class="ck-row" ${state.selected.has(it.id) ? "checked" : ""}/></td>
+        <td>${(state.page - 1) * state.pageSize + idx + 1}</td>
+        <td class="img"><img loading="lazy" src="${escapeAttr(it.image)}" onerror="this.style.opacity=0" alt=""></td>
+        <td>${escapeHTML(it.title)}</td>
+        <td>¥${fmtPrice(it.price)}</td>
+        <td>${it.sales}</td>
+        <td>${it.sales30d}</td>
+        <td>${it.rating || "-"}</td>
+        <td>${escapeHTML(it.listedAt || "-")}</td>
+        <td>${escapeHTML(it.category || "-")}</td>
+        <td><a href="${escapeAttr(it.url)}" target="_blank" rel="noopener">打开</a></td>`;
+      ui.tBody.appendChild(tr);
+    });
+    $$(".data-table .ck-row").forEach((ck) => {
+      ck.addEventListener("change", (e) => {
+        const tr = e.target.closest("tr");
+        const id = tr.getAttribute("data-id");
+        if (e.target.checked) state.selected.add(id);
+        else state.selected.delete(id);
+        tr.classList.toggle("checked", e.target.checked);
+        ui.selected.textContent = `已选 ${state.selected.size} 条`;
+        syncAllCurrentCheckbox(all);
+      });
+    });
+  }
+
+  function renderPager(total) {
+    const pages = Math.max(1, Math.ceil(total / state.pageSize));
+    if (state.page > pages) state.page = pages;
+    ui.pInfo.textContent = `第 ${state.page} / ${pages} 页`;
+    ui.pPrev.disabled = state.page <= 1;
+    ui.pNext.disabled = state.page >= pages;
+  }
+
+  function syncAllCurrentCheckbox(all) {
+    const page = paginate(all);
+    const allChecked = page.length > 0 && page.every((it) => state.selected.has(it.id));
+    ui.allCurrent.checked = allChecked;
+    ui.tHeadCk.checked = allChecked;
+  }
+
+  // ---------------- view toggle ----------------
+  function bindViewToggle() {
+    $$(".view-toggle .seg").forEach((b) => {
+      b.addEventListener("click", () => {
+        $$(".view-toggle .seg").forEach((x) => x.classList.remove("active"));
+        b.classList.add("active");
+        state.view = b.getAttribute("data-view");
+        ui.grid.classList.toggle("hidden", state.view !== "card");
+        ui.table.classList.toggle("hidden", state.view !== "list");
+      });
+    });
+    ui.grid.classList.toggle("hidden", state.view !== "card");
+    ui.table.classList.toggle("hidden", state.view !== "list");
+  }
+
+  // ---------------- filters / sort / pager ----------------
+  function bindToolbar() {
+    ui.fPrice.addEventListener("change", () => { state.filters.price = ui.fPrice.value; state.page = 1; renderAll(); });
+    ui.fSales.addEventListener("change", () => { state.filters.sales = ui.fSales.value; state.page = 1; renderAll(); });
+    ui.fRating.addEventListener("change", () => { state.filters.rating = ui.fRating.value; state.page = 1; renderAll(); });
+    ui.fListed.addEventListener("change", () => { state.filters.listed = ui.fListed.value; state.page = 1; renderAll(); });
+    ui.fClear.addEventListener("click", () => {
+      state.filters = { price: "", sales: "", rating: "", listed: "" };
+      ui.fPrice.value = ""; ui.fSales.value = ""; ui.fRating.value = ""; ui.fListed.value = "";
+      state.page = 1; renderAll();
+    });
+    ui.sKey.addEventListener("change", () => { state.sort = ui.sKey.value; renderAll(); });
+    ui.pSize.addEventListener("change", () => { state.pageSize = Number(ui.pSize.value); state.page = 1; renderAll(); });
+    ui.pPrev.addEventListener("click", () => { state.page = Math.max(1, state.page - 1); renderAll(); });
+    ui.pNext.addEventListener("click", () => { state.page = state.page + 1; renderAll(); });
+  }
+
+  function bindAllCurrent() {
+    ui.allCurrent.addEventListener("change", (e) => {
+      const all = getFilteredSortedItems();
+      const page = paginate(all);
+      page.forEach((it) => {
+        if (e.target.checked) state.selected.add(it.id);
+        else state.selected.delete(it.id);
+      });
+      renderAll();
+    });
+    ui.tHeadCk.addEventListener("change", (e) => ui.allCurrent.checked = e.target.checked, ui.allCurrent.dispatchEvent(new Event("change")));
+  }
+
+  // ---------------- export CSV ----------------
+  function bindExport() {
+    ui.btnExport.addEventListener("click", () => {
+      const ids = state.selected;
+      if (ids.size === 0) { toast("请先勾选要导出的商品"); return; }
+      const rows = state.items.filter((it) => ids.has(it.id));
+      const csv = rowsToCsv(rows);
+      downloadCsv(csv, "1688_selection_export.csv");
+      toast(`已导出 ${rows.length} 条`);
+    });
+    ui.btnLike.addEventListener("click", () => toast("已记录喜欢反馈"));
+    ui.btnDislike.addEventListener("click", () => toast("已记录不喜欢反馈"));
+  }
+
+  function rowsToCsv(rows) {
+    const headers = ["序号", "标题", "价格(元)", "月销量", "30天销量", "评分", "上架时间", "类目", "店铺", "链接"];
+    const lines = [headers.join(",")];
+    rows.forEach((it, i) => {
+      const row = [
+        i + 1,
+        it.title,
+        it.price,
+        it.sales,
+        it.sales30d,
+        it.rating,
+        it.listedAt,
+        it.category,
+        it.shop,
+        it.url
+      ].map(csvCell);
+      lines.push(row.join(","));
+    });
+    // UTF-8 BOM
+    return "﻿" + lines.join("\r\n");
+  }
+
+  function csvCell(v) {
+    if (v == null) return "";
+    const s = String(v);
+    if (/[",\r\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+    return s;
+  }
+
+  function downloadCsv(content, filename) {
+    const blob = new Blob([content], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1200);
+  }
+
+  // ---------------- utils ----------------
+  function escapeHTML(s) { return String(s == null ? "" : s).replace(/[&<>]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;"})[c]); }
+  function escapeAttr(s) { return escapeHTML(s).replace(/"/g, "&quot;"); }
+  function fmtPrice(n) { return Number(n).toFixed(2); }
+  function toast(msg) {
+    ui.toast.textContent = msg;
+    ui.toast.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => ui.toast.classList.remove("show"), 1800);
+  }
+
+  // ---------------- boot ----------------
+  function bindAsk() {
+    ui.askSend.addEventListener("click", submit);
+    ui.askInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        submit();
+      }
+    });
+  }
+
+  function bindJsonPanel() {
+    if (!ui.jsonLoad) return;
+    ui.jsonLoad.addEventListener("click", () => {
+      const txt = (ui.jsonInput.value || "").trim();
+      if (!txt) { toast("请粘贴 JSON"); return; }
+      try {
+        const data = JSON.parse(txt);
+        showJsonPanel(false);
+        renderResult(data);
+      } catch (e) {
+        toast("JSON 解析失败：" + e.message);
+      }
+    });
+    ui.jsonSample.addEventListener("click", () => {
+      if (window.__SAMPLE) {
+        ui.jsonInput.value = JSON.stringify(window.__SAMPLE, null, 2);
+        toast("已载入示例数据");
+      }
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    renderExamples();
+    bindAsk();
+    bindJsonPanel();
+    bindViewToggle();
+    bindToolbar();
+    bindAllCurrent();
+    bindExport();
+  });
+
+  // 暴露给 console 用，方便手工调试
+  window.__studio = { state, submit, renderAll };
+})();</script>
+</body>
+</html>

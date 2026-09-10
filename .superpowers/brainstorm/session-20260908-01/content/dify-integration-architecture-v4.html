@@ -1,0 +1,58 @@
+<h2>三栏选品工作台如何连接 Dify</h2>
+<p class="subtitle">推荐把 Dify 当作“工作流后端”，不要嵌入或操控它自带的 Web 页面。两个页面可以并存，并使用同一条已发布工作流。</p>
+
+<div class="mockup">
+  <div class="mockup-header">推荐数据流</div>
+  <div class="mockup-body" style="padding:24px;background:#f8fafc">
+    <div style="display:grid;grid-template-columns:1fr 52px 1fr 52px 1fr;align-items:center;gap:10px;text-align:center">
+      <div style="background:#fff;border:1px solid #b2ddff;border-radius:12px;padding:18px 12px;min-height:120px">
+        <div style="font-size:12px;color:#1570ef;font-weight:700">你的三栏页面</div>
+        <div style="margin-top:10px;color:#101828;font-weight:700">会话 + 对话 + 商品 Tabs</div>
+        <div style="margin-top:8px;font-size:12px">发送问题、展示进度、筛选与导出</div>
+      </div>
+      <div style="font-size:25px;color:#98a2b3">→</div>
+      <div style="background:#fff;border:1px solid #a6f4c5;border-radius:12px;padding:18px 12px;min-height:120px">
+        <div style="font-size:12px;color:#079455;font-weight:700">你的后端代理</div>
+        <div style="margin-top:10px;color:#101828;font-weight:700">保管密钥 + 转发请求</div>
+        <div style="margin-top:8px;font-size:12px">保存会话、消息、结果集和 Tab 状态</div>
+      </div>
+      <div style="font-size:25px;color:#98a2b3">→</div>
+      <div style="background:#fff;border:1px solid #fec84b;border-radius:12px;padding:18px 12px;min-height:120px">
+        <div style="font-size:12px;color:#b54708;font-weight:700">Dify 工作流 API</div>
+        <div style="margin-top:10px;color:#101828;font-weight:700">1688 选品库</div>
+        <div style="margin-top:8px;font-size:12px">分析需求、五层检索、去重排序、返回 JSON</div>
+      </div>
+    </div>
+
+    <div style="margin-top:22px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;font-size:12px">
+      <div style="padding:12px;background:#fff;border:1px solid #e4e7ec;border-radius:9px"><b style="color:#101828">1. 用户提问</b><div style="margin-top:5px">中间对话区发送关键词和筛选条件</div></div>
+      <div style="padding:12px;background:#fff;border:1px solid #e4e7ec;border-radius:9px"><b style="color:#101828">2. 调用工作流</b><div style="margin-top:5px">后端调用已发布的 Dify 工作流</div></div>
+      <div style="padding:12px;background:#fff;border:1px solid #e4e7ec;border-radius:9px"><b style="color:#101828">3. 解析输出</b><div style="margin-top:5px">读取 summary、queries、finalItems</div></div>
+      <div style="padding:12px;background:#fff;border:1px solid #e4e7ec;border-radius:9px"><b style="color:#101828">4. 创建 Tab</b><div style="margin-top:5px">每次结果形成独立 Tab 并持久保存</div></div>
+    </div>
+  </div>
+</div>
+
+<h3 style="margin-top:24px">三种连接方式</h3>
+<div class="options">
+  <div class="option" data-choice="a-backend-proxy" onclick="toggleSelect(this)">
+    <div class="letter">A</div><div class="content"><h3>后端代理调用（推荐）</h3><p>浏览器只访问你自己的接口，Dify API 密钥保存在服务端。可稳定实现登录、历史会话、多 Tab、权限和失败重试，适合正式产品。</p></div>
+  </div>
+  <div class="option" data-choice="b-browser-direct" onclick="toggleSelect(this)">
+    <div class="letter">B</div><div class="content"><h3>浏览器直接调用</h3><p>开发最快，但会暴露 Dify 密钥，还可能遇到跨域限制。只适合临时本地验证。</p></div>
+  </div>
+  <div class="option" data-choice="c-embed-webapp" onclick="toggleSelect(this)">
+    <div class="letter">C</div><div class="content"><h3>嵌入 Dify WebApp</h3><p>可用 iframe 看原页面，但难以控制其内部消息、结果和样式，也无法自然同步右侧商品 Tab，不建议采用。</p></div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:20px;padding:15px 17px;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px">
+  <div class="label">需要区分的两类数据</div>
+  <p style="margin:7px 0 0;line-height:1.7"><b>工作流运行记录</b>仍会进入 Dify 的日志，方便你在 Dify 中调试；<b>产品侧会话记录</b>由你的应用保存，用来驱动左侧历史、中间消息和右侧结果 Tab。它们调用同一条工作流，但不依赖 Dify 自带 WebApp 的页面状态。</p>
+</div>
+
+<h3 style="margin-top:22px">关键产品选择</h3>
+<div class="options">
+  <div class="option" data-choice="a-contextual-followup" onclick="toggleSelect(this)"><div class="letter">A</div><div class="content"><h3>后续问题继承上次条件（推荐）</h3><p>例如先搜“男士外套”，再说“只看 50 元以内”，系统自动理解为在上一批条件上继续筛选。</p></div></div>
+  <div class="option" data-choice="b-independent-search" onclick="toggleSelect(this)"><div class="letter">B</div><div class="content"><h3>每次提问独立搜索</h3><p>每条问题都从零开始，不读取上次条件。实现简单，但对话感较弱。</p></div></div>
+</div>

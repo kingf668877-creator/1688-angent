@@ -1,0 +1,61 @@
+<h2>点击“更多”后，商品结果怎么展示？</h2>
+<p class="subtitle">先确定交互布局。点击任一方案即可选择，推荐 A。</p>
+
+<div class="cards">
+  <div class="card" data-choice="a-right-drawer" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:14px;background:#f6f7f9">
+      <div style="height:210px;background:white;border:1px solid #dfe3e8;border-radius:10px;display:grid;grid-template-columns:34% 66%;overflow:hidden;font-size:11px;color:#667085">
+        <div style="padding:10px;border-right:1px solid #e5e7eb">
+          <b style="color:#101828">选品对话</b>
+          <div style="margin-top:14px;background:#f1f3f5;padding:8px;border-radius:7px">男士休闲外套</div>
+          <div style="margin-top:8px">找到 61 件商品</div>
+          <button style="margin-top:10px;border:0;background:#111827;color:white;padding:6px 10px;border-radius:6px">查看更多</button>
+        </div>
+        <div style="padding:10px;background:#fbfcfd">
+          <div style="display:flex;justify-content:space-between"><b style="color:#101828">商品结果</b><span>×</span></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px">
+            <div style="height:68px;background:#e8edf2;border-radius:6px;padding:7px">商品图<br>¥39.9</div>
+            <div style="height:68px;background:#e8edf2;border-radius:6px;padding:7px">商品图<br>¥45.0</div>
+            <div style="height:68px;background:#e8edf2;border-radius:6px;padding:7px">商品图<br>¥52.8</div>
+            <div style="height:68px;background:#e8edf2;border-radius:6px;padding:7px">商品图<br>¥68.0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. 右侧抽屉</h3>
+      <p>对话保持原宽度，点“更多”后从右侧展开商品面板。最接近遨虾体验，适合快速查看和关闭。</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b-fixed-split" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:14px;background:#f6f7f9">
+      <div style="height:210px;background:white;border:1px solid #dfe3e8;border-radius:10px;display:grid;grid-template-columns:42% 58%;overflow:hidden;font-size:11px;color:#667085">
+        <div style="padding:10px;border-right:1px solid #e5e7eb"><b style="color:#101828">对话区</b><div style="margin-top:14px;background:#f1f3f5;padding:8px;border-radius:7px">搜索近30天男士外套</div><div style="margin-top:10px">已筛选新品与销量</div></div>
+        <div style="padding:10px"><b style="color:#101828">固定结果区</b><div style="height:28px;background:#eef2f6;border-radius:5px;margin-top:10px"></div><div style="height:55px;background:#eef2f6;border-radius:5px;margin-top:7px"></div><div style="height:55px;background:#eef2f6;border-radius:5px;margin-top:7px"></div></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. 固定双栏</h3>
+      <p>左边持续对话，右边始终展示结果。操作效率高，但小屏幕空间较紧。</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c-detail-page" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:14px;background:#f6f7f9">
+      <div style="height:210px;background:white;border:1px solid #dfe3e8;border-radius:10px;overflow:hidden;font-size:11px;color:#667085">
+        <div style="height:28px;border-bottom:1px solid #e5e7eb;padding:8px 12px"><b style="color:#101828">← 返回对话　商品结果详情</b></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px"><div style="height:125px;background:#e8edf2;border-radius:6px;padding:7px">大图商品卡</div><div style="height:125px;background:#e8edf2;border-radius:6px;padding:7px">大图商品卡</div><div style="height:125px;background:#e8edf2;border-radius:6px;padding:7px">大图商品卡</div></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C. 独立详情页</h3>
+      <p>点击“更多”进入完整结果页。适合复杂筛选和批量导出，但会中断对话上下文。</p>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:22px;padding:14px 16px;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px">
+  <div class="label">关键限制</div>
+  <p style="margin:6px 0 0">Dify 自带的工作流运行测试页不能改造成这种产品界面。测试页仍用于看节点输入输出；正式效果需要单独做一个前端页面，通过 Dify API 调用同一条工作流。</p>
+</div>

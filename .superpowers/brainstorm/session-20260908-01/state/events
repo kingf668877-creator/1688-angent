@@ -1,0 +1,2 @@
+{"type":"click","text":"A后端代理调用（推荐）浏览器只访问你自己的接口，Dify API 密钥保存在服务端。可稳定实现登录、历史会话、多 Tab、权限和失败重试，适合正式产品。","choice":"a-backend-proxy","id":null,"timestamp":1788832577006}
+{"type":"click","text":"A后续问题继承上次条件（推荐）例如先搜“男士外套”，再说“只看 50 元以内”，系统自动理解为在上一批条件上继续筛选。","choice":"a-contextual-followup","id":null,"timestamp":1788832602775}

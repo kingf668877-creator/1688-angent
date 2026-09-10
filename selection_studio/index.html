@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1280,initial-scale=1" />
+<title>1688 选品库 · 遨虾风格工作台</title>
+<link rel="stylesheet" href="assets/app.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">α</span>
+    <span class="brand-name">1688 选品库</span>
+    <span class="brand-tag">蓝海 · 热点 · 改款 · 直出专家选品</span>
+  </div>
+  <nav class="topnav">
+    <a class="active" href="#">选品 Agent</a>
+    <a href="#">案例库</a>
+    <a href="#">选品历史</a>
+    <a href="#">设置</a>
+  </nav>
+</header>
+
+<section class="ask">
+  <div class="ask-card">
+    <div class="ask-context">
+      <span>我关注的是</span>
+      <span class="chip">平台：1688</span>
+      <span class="chip">类目：默认全类目</span>
+    </div>
+    <div id="ask-input" class="ask-input" contenteditable="true" data-placeholder="如：近30天上架的万圣节产品 / 邂逅花园系列 / 毛绒玩具"></div>
+    <button id="ask-send" class="ask-send" title="发送（回车提交）">↑</button>
+  </div>
+  <div id="ask-examples" class="ask-examples"></div>
+</section>
+
+<section id="json-panel" class="ask hidden">
+  <div class="ask-card">
+    <div class="ask-context">
+      <span>粘贴 Dify 工作流输出：</span>
+      <span class="chip">把工作流 result 里 ```json``` 代码块复制到下面</span>
+    </div>
+    <textarea id="json-input" style="width:100%;height:160px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;border:1px solid #e5e7eb;border-radius:10px;padding:10px;" placeholder='{"keyword":"...","summary":"...","finalItems":[]}'></textarea>
+    <div style="display:flex;gap:10px;margin-top:10px;">
+      <button id="json-load" class="primary-btn">载入并预览</button>
+      <button id="json-sample" class="ghost-btn">载入示例数据</button>
+    </div>
+  </div>
+</section>
+
+<section id="planner" class="planner hidden">
+  <div class="planner-title">任务规划</div>
+  <ol class="planner-steps">
+    <li data-step="understand"><span class="dot"></span><span class="label">需求理解</span><span class="hint">分析搜索词、识别系列 / 人群 / 场景</span></li>
+    <li data-step="queries"><span class="dot"></span><span class="label">查询词拆解</span><span class="hint">生成 5 层查询词（核心 / 修饰 / 系列 / 人群 / 场景）</span></li>
+    <li data-step="search"><span class="dot"></span><span class="label">调用店雷达</span><span class="hint">逐层调用接口、按类目与模糊词过滤</span></li>
+    <li data-step="rank"><span class="dot"></span><span class="label">去重 + 排序</span><span class="hint">按 30 天销量、机会分、上架时间综合排序</span></li>
+    <li data-step="report"><span class="dot"></span><span class="label">撰写报告</span><span class="hint">生成一句话摘要、商品列表、追问建议</span></li>
+  </ol>
+</section>
+
+<main id="result" class="result hidden">
+
+  <header class="result-head">
+    <div class="summary-block">
+      <h2 id="r-summary-title">选品推荐</h2>
+      <p id="r-summary-text" class="summary-text"></p>
+      <div id="r-followups" class="followups"></div>
+    </div>
+    <div class="result-actions">
+      <button id="btn-feedback-like" class="ghost-btn">👍 喜欢</button>
+      <button id="btn-feedback-dislike" class="ghost-btn">👎 不喜欢</button>
+      <button id="btn-export-csv" class="primary-btn">⬇ 导出选中为 CSV</button>
+    </div>
+  </header>
+
+  <section class="toolbar">
+    <div class="view-toggle">
+      <button data-view="card" class="seg active">大图模式</button>
+      <button data-view="list" class="seg">列表模式</button>
+    </div>
+    <div class="filters">
+      <label>价格
+        <select id="f-price">
+          <option value="">不限</option>
+          <option value="0-10">≤ 10 元</option>
+          <option value="10-30">10 - 30 元</option>
+          <option value="30-60">30 - 60 元</option>
+          <option value="60-">≥ 60 元</option>
+        </select>
+      </label>
+      <label>月销量
+        <select id="f-sales">
+          <option value="">不限</option>
+          <option value="0-100">≤ 100</option>
+          <option value="100-500">100 - 500</option>
+          <option value="500-1000">500 - 1000</option>
+          <option value="1000-">≥ 1000</option>
+        </select>
+      </label>
+      <label>评分
+        <select id="f-rating">
+          <option value="">不限</option>
+          <option value="4.5">≥ 4.5</option>
+          <option value="4.0">≥ 4.0</option>
+        </select>
+      </label>
+      <label>上架时间
+        <select id="f-listed">
+          <option value="">不限</option>
+          <option value="30">近 30 天</option>
+          <option value="90">近 90 天</option>
+        </select>
+      </label>
+      <button id="f-clear" class="ghost-btn small">清空筛选</button>
+    </div>
+    <div class="sort">
+      <label>排序
+        <select id="s-key">
+          <option value="sales30d_desc">按 30 天销量 ↓</option>
+          <option value="sales_desc">按月销量 ↓</option>
+          <option value="price_asc">按价格 ↑</option>
+          <option value="price_desc">按价格 ↓</option>
+          <option value="listed_desc">按上架时间 ↓</option>
+          <option value="rating_desc">按评分 ↓</option>
+        </select>
+      </label>
+    </div>
+  </section>
+
+  <section class="counts">
+    <span id="c-total">共 0 条结果</span>
+    <span id="c-selected" class="muted">已选 0 条</span>
+    <label class="muted"><input type="checkbox" id="c-all-current" /> 全选当前页</label>
+  </section>
+
+  <section id="grid" class="grid card-view"></section>
+  <section id="table" class="hidden">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th class="ck"><input type="checkbox" id="t-head-ck" /></th>
+          <th>#</th>
+          <th>主图</th>
+          <th>标题</th>
+          <th>价格</th>
+          <th>月销量</th>
+          <th>30天销量</th>
+          <th>评分</th>
+          <th>上架时间</th>
+          <th>类目</th>
+          <th>链接</th>
+        </tr>
+      </thead>
+      <tbody id="t-body"></tbody>
+    </table>
+  </section>
+
+  <footer class="pager">
+    <button id="p-prev" class="ghost-btn">上一页</button>
+    <span id="p-info">第 1 / 1 页</span>
+    <button id="p-next" class="ghost-btn">下一页</button>
+    <span class="muted">每页</span>
+    <select id="p-size">
+      <option>10</option>
+      <option selected>20</option>
+      <option>50</option>
+    </select>
+    <span class="muted">条</span>
+  </footer>
+
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<h2>同一对话可以保留多个商品结果 Tab</h2>
+<p class="subtitle">每次搜索产生一个独立结果集。点击中间的结果卡会打开或激活右侧对应的 Tab，不会覆盖之前的商品。</p>
+
+<div class="mockup">
+  <div class="mockup-header">会话：秋季男装选品</div>
+  <div class="mockup-body" style="padding:0;min-height:440px;display:grid;grid-template-columns:190px minmax(340px,.9fr) minmax(480px,1.25fr);background:#f7f8fa;color:#475467">
+    <aside style="padding:14px;background:#f2f3f5;border-right:1px solid #e4e7ec">
+      <button style="width:100%;border:0;background:#111827;color:#fff;border-radius:8px;padding:10px">＋ 新建对话</button>
+      <div style="margin-top:18px;font-size:11px;color:#98a2b3">今天</div>
+      <div style="margin-top:8px;padding:10px;background:#fff;border-radius:8px;color:#101828;font-weight:600">秋季男装选品</div>
+      <div style="padding:10px">万圣节新品</div>
+      <div style="padding:10px">大码连衣裙</div>
+    </aside>
+
+    <main style="padding:18px;background:#fff;border-right:1px solid #e4e7ec">
+      <div style="text-align:right"><span style="display:inline-block;background:#f2f4f7;padding:10px 12px;border-radius:12px">先搜索男士休闲外套</span></div>
+      <div style="margin-top:15px;line-height:1.6">已找到 61 件相关商品。</div>
+      <div style="margin-top:9px;padding:11px;border:1px solid #b2ddff;background:#eff8ff;border-radius:9px;display:flex;justify-content:space-between;align-items:center">
+        <div><b style="color:#101828">男士休闲外套</b><div style="font-size:12px">61 件商品</div></div><button style="border:0;background:#1570ef;color:#fff;border-radius:6px;padding:7px 9px">查看结果</button>
+      </div>
+      <div style="margin-top:20px;text-align:right"><span style="display:inline-block;background:#f2f4f7;padding:10px 12px;border-radius:12px">再找价格 50 元内的工装夹克</span></div>
+      <div style="margin-top:15px;line-height:1.6">已按价格和款式重新筛选，找到 24 件。</div>
+      <div style="margin-top:9px;padding:11px;border:1px solid #e4e7ec;background:#fafafa;border-radius:9px;display:flex;justify-content:space-between;align-items:center">
+        <div><b style="color:#101828">工装夹克 ¥50内</b><div style="font-size:12px">24 件商品</div></div><button style="border:1px solid #d0d5dd;background:#fff;border-radius:6px;padding:7px 9px">查看结果</button>
+      </div>
+    </main>
+
+    <section style="background:#fff">
+      <div style="height:48px;border-bottom:1px solid #e4e7ec;display:flex;align-items:end;padding:0 12px;gap:3px">
+        <div style="height:36px;padding:0 13px;display:flex;align-items:center;border:1px solid #b2ddff;border-bottom:2px solid #1570ef;border-radius:8px 8px 0 0;background:#eff8ff;color:#175cd3;font-size:12px;font-weight:600">男士休闲外套 · 61　×</div>
+        <div style="height:36px;padding:0 13px;display:flex;align-items:center;border:1px solid #e4e7ec;border-bottom:0;border-radius:8px 8px 0 0;background:#f9fafb;font-size:12px">工装夹克 ¥50内 · 24　×</div>
+        <button style="margin-left:auto;margin-bottom:8px;border:0;background:transparent;color:#667085">导出 CSV</button>
+      </div>
+      <div style="padding:12px 15px;border-bottom:1px solid #eef0f2;font-size:12px;display:flex;gap:7px"><span style="background:#f2f4f7;padding:6px 9px;border-radius:6px">近30天</span><span style="background:#f2f4f7;padding:6px 9px;border-radius:6px">销量优先</span><span style="background:#f2f4f7;padding:6px 9px;border-radius:6px">共 61 件</span></div>
+      <div style="padding:15px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        <div style="border:1px solid #e4e7ec;border-radius:8px;overflow:hidden"><div style="height:105px;background:#e9edf2;display:grid;place-items:center">商品图片</div><div style="padding:8px;font-size:12px"><b style="color:#101828">休闲夹克</b><div style="color:#f04438;margin-top:5px">¥39.90</div><div>月销 2.3万</div></div></div>
+        <div style="border:1px solid #e4e7ec;border-radius:8px;overflow:hidden"><div style="height:105px;background:#e9edf2;display:grid;place-items:center">商品图片</div><div style="padding:8px;font-size:12px"><b style="color:#101828">工装外套</b><div style="color:#f04438;margin-top:5px">¥52.80</div><div>月销 1.8万</div></div></div>
+        <div style="border:1px solid #e4e7ec;border-radius:8px;overflow:hidden"><div style="height:105px;background:#e9edf2;display:grid;place-items:center">商品图片</div><div style="padding:8px;font-size:12px"><b style="color:#101828">棒球服</b><div style="color:#f04438;margin-top:5px">¥68.00</div><div>月销 1.5万</div></div></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="section" style="margin-top:20px;padding:15px 17px;background:#f8fafc;border:1px solid #e4e7ec;border-radius:10px">
+  <div class="label">建议规则</div>
+  <p style="margin:7px 0 0;line-height:1.65">一个工作流运行结果对应一个 Tab；Tab 名称使用“搜索关键词 · 商品数”；点击中间历史结果卡时激活对应 Tab；关闭 Tab 只关闭右侧视图，不删除对话和结果数据；重新点击结果卡即可恢复。</p>
+</div>
+
+<h3 style="margin-top:22px">Tab 是否需要跨会话保留？</h3>
+<div class="options">
+  <div class="option" data-choice="a-current-conversation" onclick="toggleSelect(this)"><div class="letter">A</div><div class="content"><h3>仅保留当前会话（推荐）</h3><p>切换左侧会话后，右侧只显示该会话自己的结果 Tab，逻辑清晰，也不会越积越多。</p></div></div>
+  <div class="option" data-choice="b-global-tabs" onclick="toggleSelect(this)"><div class="letter">B</div><div class="content"><h3>跨会话全局保留</h3><p>不同会话的商品结果同时留在右侧，更便于横向比较，但容易混淆来源。</p></div></div>
+</div>
