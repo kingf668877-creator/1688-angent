@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>店雷达1688 / 1688选品库 · 构建归档</title>
+<style>
+  :root{
+    --bg:#0b1020;
+    --panel:#0f1730;
+    --panel-2:#131e3d;
+    --line:#1f2c52;
+    --text:#e7ecf7;
+    --muted:#9aa6c4;
+    --accent:#7c9cff;
+    --accent-2:#6ee7c7;
+    --warn:#fbbf24;
+    --danger:#f87171;
+    --ok:#34d399;
+    --code:#0a0f24;
+    --code-border:#22305a;
+    --kbd:#1a2547;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font:14px/1.6 -apple-system,"Segoe UI","PingFang SC","Microsoft Yahei",sans-serif}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code,kbd,pre{font-family:"JetBrains Mono",Consolas,Menlo,monospace}
+  .wrap{max-width:1200px;margin:0 auto;padding:32px 24px 80px}
+  header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:24px}
+  header.top h1{margin:0;font-size:22px;letter-spacing:.5px}
+  header.top .meta{color:var(--muted);font-size:12px}
+  header.top .meta code{background:var(--kbd);padding:2px 6px;border-radius:6px;border:1px solid var(--line);color:#cfd6ee}
+  .tabs{display:flex;gap:6px;background:var(--panel);border:1px solid var(--line);padding:6px;border-radius:12px;margin-bottom:18px;width:max-content}
+  .tabs button{appearance:none;background:transparent;color:var(--muted);border:0;padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;transition:.2s}
+  .tabs button:hover{color:var(--text)}
+  .tabs button.active{background:linear-gradient(135deg,#2b3a73,#1a2547);color:#fff;box-shadow:0 4px 14px rgba(124,156,255,.25)}
+  .tabs button .pill{display:inline-block;margin-left:8px;font-size:11px;background:#1a2547;border:1px solid var(--line);padding:2px 6px;border-radius:99px;color:var(--muted)}
+  .tabs button.active .pill{background:#1e2a55;color:#cfd6ee}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+  .panel + .panel{margin-top:18px}
+  .panel h2{margin:0 0 6px;font-size:17px}
+  .panel h3{margin:18px 0 6px;font-size:14px;color:var(--accent-2)}
+  .panel .lead{color:var(--muted);margin:0 0 14px}
+  .kv{display:grid;grid-template-columns:160px 1fr;gap:6px 14px;font-size:13px}
+  .kv div:nth-child(odd){color:var(--muted)}
+  pre{background:var(--code);border:1px solid var(--code-border);border-radius:10px;padding:12px 14px;overflow:auto;line-height:1.55;font-size:12.5px;color:#cfd6ee;margin:10px 0}
+  pre .k{color:#7c9cff}
+  pre .s{color:#6ee7c7}
+  pre .c{color:#6b7392;font-style:italic}
+  .step{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px dashed var(--line)}
+  .step:first-child{border-top:0}
+  .step .idx{flex:0 0 26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#3b5bcd,#1c2a55);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600}
+  .step .body{flex:1}
+  .step .title{font-size:13.5px;font-weight:600}
+  .step .desc{color:var(--muted);font-size:12.5px;margin-top:2px}
+  .flow{display:grid;grid-template-columns:repeat(8,1fr);gap:10px;align-items:stretch;margin:14px 0 6px}
+  .node{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:10px 8px;font-size:11.5px;text-align:center;display:flex;flex-direction:column;justify-content:space-between;min-height:64px}
+  .node .tag{display:inline-block;font-size:10px;padding:2px 6px;border-radius:99px;background:#1a2547;color:#9aa6c4;width:max-content;margin:0 auto 6px}
+  .node.start{border-color:#34d399;background:linear-gradient(135deg,#0e2a23,#102d3e)}
+  .node.tool{border-color:#fbbf24}
+  .node.code{border-color:#7c9cff}
+  .node.llm{border-color:#6ee7c7}
+  .node.end{border-color:#f87171;background:linear-gradient(135deg,#2a1414,#3a1414)}
+  .arrow{grid-column:span 0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .grid2 pre{margin:0;min-height:160px}
+  .ok{color:var(--ok)}
+  .warn{color:var(--warn)}
+  .danger{color:var(--danger)}
+  .legend{display:flex;flex-wrap:wrap;gap:10px;color:var(--muted);font-size:12px;margin-top:8px}
+  .legend .dot{display:inline-block;width:10px;height:10px;border-radius:99px;margin-right:4px;vertical-align:middle}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px}
+  th,td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{color:var(--muted);font-weight:600;background:rgba(255,255,255,.02)}
+  td code{background:var(--kbd);padding:1px 5px;border-radius:5px;border:1px solid var(--line);color:#cfd6ee;font-size:12px}
+  .pill-ok{background:rgba(52,211,153,.12);color:#34d399;padding:1px 8px;border-radius:99px;font-size:11px;border:1px solid rgba(52,211,153,.4)}
+  .pill-warn{background:rgba(251,191,36,.12);color:#fbbf24;padding:1px 8px;border-radius:99px;font-size:11px;border:1px solid rgba(251,191,36,.4)}
+  .pill-info{background:rgba(124,156,255,.12);color:#7c9cff;padding:1px 8px;border-radius:99px;font-size:11px;border:1px solid rgba(124,156,255,.4)}
+  .hidden{display:none}
+  footer{margin-top:36px;color:var(--muted);font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>店雷达1688 / 1688选品库 · 构建归档</h1>
+      <div class="meta">
+        分支 <code>docs/dify-1688-build-log</code> ·
+        基线 <code>1eb85cf</code> ·
+        Dify 1.17.0 ·
+        编排者 admin ·
+        最后回归 2026-09-10 16:12:16
+      </div>
+    </div>
+    <div class="meta">
+      应用 ID · 主 Chatflow <code>adba0a12…</code><br/>
+      应用 ID · 1688选品库 <code>9eb8746e…</code>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="active" data-tab="overview" role="tab">概览 <span class="pill">1</span></button>
+    <button data-tab="workflow" role="tab">1688选品库 Workflow <span class="pill">8 节点</span></button>
+    <button data-tab="chatflow" role="tab">店雷达1688 Chatflow <span class="pill">3 节点</span></button>
+    <button data-tab="regression" role="tab">端到端回归 <span class="pill">2 轮</span></button>
+    <button data-tab="trouble" role="tab">故障与修复 <span class="pill">5 条</span></button>
+  </div>
+
+  <!-- ====================== OVERVIEW ====================== -->
+  <section id="tab-overview" class="panel">
+    <h2>总览</h2>
+    <p class="lead">两个 Dify 应用协作：上游 <b>店雷达1688</b>（Chatflow）负责会话路由与上下文继承，下游 <b>1688选品库</b>（Workflow）负责把自然语言翻译成查询并执行。两者通过 Function Calling 连接，下游无状态。</p>
+
+    <div class="grid2">
+      <pre><span class="c">// 主 Chatflow：店雷达1688</span>
+{
+  <span class="k">"id"</span>: <span class="s">"adba0a12-b57f-4bc0-8c0f-8b32b51c70d1"</span>,
+  <span class="k">"mode"</span>: <span class="s">"advanced-chat"</span>,
+  <span class="k">"nodes"</span>: [ 用户输入 → Agent → 直接回复 ],
+  <span class="k">"agent_strategy"</span>: <span class="s">"function_calling"</span>,
+  <span class="k">"memory"</span>: { <span class="k">"enabled"</span>: true, <span class="k">"size"</span>: 50 }
+}
+
+<span class="c">// 下游 Workflow：1688选品库</span>
+{
+  <span class="k">"id"</span>: <span class="s">"9eb8746e-1dc7-4070-b8f9-32ca54628751"</span>,
+  <span class="k">"published_version"</span>: <span class="s">"#87"</span>,
+  <span class="k">"entry"</span>: <span class="s">"用户输入"</span>,
+  <span class="k">"output"</span>: <span class="s">"Markdown 商品表格"</span>
+}</pre>
+      <pre><span class="c">// 数据流</span>
+用户输入
+  └─ sys.query 进入主 Chatflow
+       └─ Agent 拆解 + 调用下游 Workflow
+            └─ 商品转表格 → Markdown 表格
+                 └─ 直接回复 → 用户看到含主图/标题/价格…的表格
+
+<span class="c">// 关键设计原则</span>
+1. 单轮查询：原文透传到下游
+2. 上下文追问：Chatflow 合并条件后传给下游
+3. 下游无状态：每次重新调用工具，不复用上次结果
+4. 强制重调：禁用"基于历史表格自行筛选"</pre>
+    </div>
+
+    <h3>主从职责</h3>
+    <table>
+      <thead><tr><th>能力</th><th>主 Chatflow</th><th>下游 Workflow</th></tr></thead>
+      <tbody>
+        <tr><td>会话上下文</td><td><span class="pill-ok">承担</span></td><td><span class="pill-info">无状态</span></td></tr>
+        <tr><td>条件合并</td><td><span class="pill-ok">承担</span></td><td>—</td></tr>
+        <tr><td>搜词分析</td><td>—</td><td><span class="pill-ok">承担</span></td></tr>
+        <tr><td>类目解析</td><td>—</td><td><span class="pill-ok">承担</span></td></tr>
+        <tr><td>商品搜索</td><td>—</td><td><span class="pill-ok">承担</span></td></tr>
+        <tr><td>Markdown 表格生成</td><td>—</td><td><span class="pill-ok">承担</span></td></tr>
+        <tr><td>回答用户</td><td><span class="pill-ok">承担</span></td><td>—</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ====================== WORKFLOW ====================== -->
+  <section id="tab-workflow" class="panel hidden">
+    <h2>下游 Workflow：1688选品库</h2>
+    <p class="lead">8 个节点，发布版本 #87。起点是用户输入节点接收 <code>query</code>，终点是输出节点返回 Markdown 商品表格。</p>
+
+    <div class="flow">
+      <div class="node start"><span class="tag">START</span>用户输入<br/><small>query</small></div>
+      <div class="node llm"><span class="tag">LLM · gpt-5.6-terra</span>搜词分析并生成 JSON</div>
+      <div class="node tool"><span class="tag">TOOL</span>aligetcategory_get</div>
+      <div class="node code"><span class="tag">CODE</span>类目词生成 JSON</div>
+      <div class="node code"><span class="tag">CODE</span>搜索词生成 JSON</div>
+      <div class="node tool"><span class="tag">TOOL</span>product_ai_search_list</div>
+      <div class="node code"><span class="tag">CODE</span>商品转表格</div>
+      <div class="node end"><span class="tag">END</span>输出 Markdown</div>
+    </div>
+
+    <h3>节点 1 · 用户输入</h3>
+    <pre><span class="k">input</span>: { <span class="k">"query"</span>: <span class="s">"string"</span> }</pre>
+
+    <h3>节点 2 · 搜词分析并生成 JSON（LLM）</h3>
+    <p class="lead">从 query 抽取：coreProduct、modifiers、expandedKeywords、expandedTokenGroups、requiredKeywords。模型：<code>gpt-5.6-terra</code>。该节点控制品类识别正确性，是核心质量门。</p>
+    <pre>{
+  <span class="k">"coreProduct"</span>: <span class="s">"连衣裙"</span>,
+  <span class="k">"modifiers"</span>: { <span class="k">"style"</span>: [], <span class="k">"crowd"</span>: [], <span class="k">"scene"</span>: [] },
+  <span class="k">"expandedKeywords"</span>: [ <span class="s">"连衣裙"</span>, <span class="s">"夏季连衣裙"</span>, <span class="s">"长袖连衣裙"</span> ],
+  <span class="k">"requiredKeywords"</span>: [ <span class="s">"连衣裙"</span> ]
+}</pre>
+
+    <h3>节点 3 · 类目查询（Tool）</h3>
+    <p class="lead">调用 <code>aligetcategory_get</code>，按关键词反查 1688 类目树。</p>
+    <pre>{
+  <span class="k">"tool"</span>: <span class="s">"aligetcategory_get"</span>,
+  <span class="k">"input"</span>: { <span class="k">"keyWord"</span>: <span class="s">"连衣裙"</span>, <span class="k">"author"</span>: <span class="s">"a3f7b2c9d1e8f4a5b6c7d8e9f0a1b2c3"</span> },
+  <span class="k">"output"</span>: {
+    <span class="k">"code"</span>: 200,
+    <span class="k">"result"</span>: [
+      { <span class="k">"category_name"</span>: <span class="s">"连衣裙"</span>, <span class="k">"category_id"</span>: <span class="s">"1031910"</span> },
+      { <span class="k">"category_name"</span>: <span class="s">"大码连衣裙"</span>, <span class="k">"category_id"</span>: <span class="s">"1046799"</span> }
+    ]
+  }
+}</pre>
+
+    <h3>节点 4 · 类目词生成 JSON（Code）</h3>
+    <p class="lead">把 <code>result</code> 解析成 <code>categoryTree</code> 和 <code>categoryIdList</code>，兼容接口真实字段 <code>result</code>。</p>
+    <pre><span class="c">// 关键修复点</span>
+tree = data.get(<span class="s">"categoryTree"</span>) or data.get(<span class="s">"result"</span>) or []
+ids = [c[<span class="s">"category_id"</span>] for c in tree]
+
+<span class="c">// 输出</span>
+{
+  <span class="k">"categoryTree"</span>: [...],
+  <span class="k">"categoryIdList"</span>: [<span class="s">"1031910"</span>, <span class="s">"1046799"</span>]
+}</pre>
+
+    <h3>节点 5 · 搜索词生成 JSON（Code）</h3>
+    <p class="lead">把搜词结果 + 类目 + 时间价格等条件，组装成下游 <code>product_ai_search_list</code> 所需的请求体。</p>
+    <pre>{
+  <span class="k">"pageIndex"</span>: 1,
+  <span class="k">"pageSize"</span>: 30,
+  <span class="k">"query"</span>: {
+    <span class="k">"keyWord"</span>: <span class="s">"连衣裙"</span>,
+    <span class="k">"categoryIdList"</span>: [<span class="s">"1031910"</span>, <span class="s">"1046799"</span>],
+    <span class="k">"aiKeyword"</span>: { <span class="k">"requiredKeywords"</span>: [...], <span class="k">"expandedKeywords"</span>: [...], ... },
+    <span class="k">"beginOfferCreateTime"</span>: <span class="s">"近30天"</span>,
+    <span class="k">"endOfferCreateTime"</span>: <span class="s">""</span>,
+    <span class="k">"beginPrice"</span>: <span class="k">null</span>,
+    <span class="k">"endPrice"</span>: 10
+  }
+}</pre>
+
+    <h3>节点 6 · 商品搜索（Tool）</h3>
+    <p class="lead">调用 1688 商品搜索接口，命中后返回 30 条商品 + 主图、价格、起订、销量、发货、地区、公司、类目。</p>
+
+    <h3>节点 7 · 商品转表格（Code）</h3>
+    <p class="lead">核心渲染节点。把 <code>result.list</code> 转为 Markdown 表格，主图列写成 <code>![title](image)</code>。</p>
+    <pre>header = <span class="s">"| 主图 | 标题 | 价格 | 起订 | 销量 | 发货 | 地区 | 公司 | 类目 |"</span>
+sep    = <span class="s">"| --- | --- | --- | --- | --- | --- | --- | --- | --- |"</span>
+rows   = []
+<span class="k">for</span> p <span class="k">in</span> result[<span class="s">"list"</span>]:
+    rows.append(<span class="s">"| "</span> + <span class="s">"|"</span>.join([
+        <span class="s">f"![{p['title'][:30]}]({p['image']})"</span>,
+        p[<span class="s">"title"</span>],
+        <span class="s">f"{p['price']}"</span>,
+        <span class="s">f"{p['quantityBegin']} {p['unit']}"</span>,
+        <span class="s">f"{p.get('saleQuantity','')}"</span>,
+        <span class="s">f"{p.get('deliveryTime','')}"</span>,
+        <span class="s">f"{p.get('province','')} {p.get('city','')}"</span>,
+        p[<span class="s">"company"</span>],
+        p[<span class="s">"levelName"</span>],
+    ]) + <span class="s">" |"</span>)
+markdown = <span class="s">"\n"</span>.join([header, sep, *rows])</pre>
+
+    <h3>节点 8 · 输出</h3>
+    <p class="lead">把生成的 Markdown 表格作为最终回复体返回给主 Chatflow。</p>
+
+    <h3>创建步骤</h3>
+    <div class="step"><div class="idx">1</div><div class="body"><div class="title">新建 Workflow 应用</div><div class="desc">Dify 控制台 → 工作室 → 新建 → 工作流（Workflow），命名"1688选品库"。</div></div></div>
+    <div class="step"><div class="idx">2</div><div class="body"><div class="title">配置用户输入</div><div class="desc">添加"开始"节点，输入参数 <code>query</code>。</div></div></div>
+    <div class="step"><div class="idx">3</div><div class="body"><div class="title">添加搜词分析 LLM</div><div class="desc">选 gpt-5.6-terra，粘贴搜词分析 prompt，输出 JSON。</div></div></div>
+    <div class="step"><div class="idx">4</div><div class="body"><div class="title">接入类目查询工具</div><div class="desc">Tool 节点 <code>aligetcategory_get</code>，作者码固定。</div></div></div>
+    <div class="step"><div class="idx">5</div><div class="body"><div class="title">修复类目解析</div><div class="desc">Code 节点读取 <code>result</code> 字段，兼容接口真实字段名。</div></div></div>
+    <div class="step"><div class="idx">6</div><div class="body"><div class="title">组装搜索请求</div><div class="desc">Code 节点把搜词 + 类目 + 时间价格组合成 <code>product_ai_search_list</code> 负载。</div></div></div>
+    <div class="step"><div class="idx">7</div><div class="body"><div class="title">调用商品搜索</div><div class="desc">Tool 节点 <code>product_ai_search_list</code>，接收上一步 JSON。</div></div></div>
+    <div class="step"><div class="idx">8</div><div class="body"><div class="title">渲染 Markdown 表格</div><div class="desc">Code 节点循环商品列表，主图用 <code>![title](image)</code>。</div></div></div>
+    <div class="step"><div class="idx">9</div><div class="body"><div class="title">发布为 #87</div><div class="desc">保存草稿 → 点击发布 → 命名版本 → 发布。</div></div></div>
+  </section>
+
+  <!-- ====================== CHATFLOW ====================== -->
+  <section id="tab-chatflow" class="panel hidden">
+    <h2>主 Chatflow：店雷达1688</h2>
+    <p class="lead">3 个节点：用户输入 → Agent（FunctionCalling）→ 直接回复。已发布版本 <code>#7</code>。Agent 指令承担会话上下文、条件继承与覆盖、强制重调工具三大职责。</p>
+
+    <div class="flow">
+      <div class="node start"><span class="tag">START</span>用户输入<br/><small>sys.query</small></div>
+      <div class="node llm"><span class="tag">Agent · gpt-5.6-terra</span>FunctionCalling · 1688选品库</div>
+      <div class="node end"><span class="tag">END</span>直接回复</div>
+    </div>
+
+    <h3>关键配置</h3>
+    <div class="kv">
+      <div>Agent 策略</div><div>FunctionCalling</div>
+      <div>模型</div><div><code>gpt-5.6-terra</code> · <code>langgenius/openai/openai</code></div>
+      <div>输入</div><div><code>sys.query</code></div>
+      <div>工具</div><div><code>1688选品库</code> · provider <code>85e2a0d0-154a-4b66-b37b-3ed931a08e01</code></div>
+      <div>工具参数</div><div><code>{ "query": { "auto": 1, "value": null } }</code>（由 Agent 自动生成）</div>
+      <div>记忆</div><div>开启 · 窗口 50</div>
+      <div>已发布版本</div><div><code>#7</code></div>
+    </div>
+
+    <h3>Agent 指令（全文）</h3>
+    <pre>你是一名1688跨境选品助理。
+
+<span class="k">强制调用规则</span>：只要用户提出商品搜索，或对上一轮搜索增加、修改、取消任何筛选条件，你都必须重新调用且只调用一次"1688选品库"（tool_name=1688selector）。严禁根据聊天历史中的商品表格自行筛选、推断结果或直接回答"没有符合商品"；只有工具本次返回无结果时才能这样回答。
+
+<span class="k">query 参数规则</span>：
+1. 当前消息是完整选品请求时，将当前消息完整原文作为 query 传入，不得只提取商品词，不得删除或改写时间、价格、类目、排序、销量、地区、材质、风格等条件。
+2. 当前消息依赖上文，例如"基于前面的结果""只要大码连衣裙""价格改成20元以下""再看最近7天"，必须从聊天记忆读取最近一次搜索条件，继承未修改条件，用当前消息新增或覆盖对应条件，生成一条完整、可独立执行的新 query，再强制调用工具。
+3. 新条件覆盖冲突旧条件；明确取消的条件必须移除；不得同时传入新旧冲突条件。
+4. 工具没有会话记忆。绝不能只传"再筛选""只要大码连衣裙"等不完整追问，query 必须包含商品和全部当前有效条件。
+5. 每次追问都按合并条件重新搜索，不是在上一轮展示的30条商品中本地过滤。
+
+示例：上一轮是"近30天上架、价格小于10元的连衣裙"，当前消息是"基于前面的商品结果帮我再筛选只要大码连衣裙类目的"，必须调用工具，query 必须是"近30天上架、价格小于10元、类目为大码连衣裙的商品"。不得查看上一轮表格后自行回答。
+
+工具返回 Markdown 商品表格。必须原样输出本次工具结果，不要总结、改写、补充字段，也不要在调用前回复计划或解释。
+
+仅当当前消息和聊天记忆中都没有可识别的商品或选品需求时，才请用户补充需求且不调用工具。</pre>
+
+    <h3>创建步骤</h3>
+    <div class="step"><div class="idx">1</div><div class="body"><div class="title">新建 Chatflow 应用</div><div class="desc">Dify 工作室 → 新建 → Chatflow，命名"店雷达1688"。</div></div></div>
+    <div class="step"><div class="idx">2</div><div class="body"><div class="title">确认默认节点</div><div class="desc">保留 用户输入 → Agent → 直接回复 三节点。</div></div></div>
+    <div class="step"><div class="idx">3</div><div class="body"><div class="title">绑定下游为工具</div><div class="desc">Agent 节点添加工具 → 工作流 → 1688选品库。</div></div></div>
+    <div class="step"><div class="idx">4</div><div class="body"><div class="title">开启聊天记忆</div><div class="desc">Agent 节点记忆开关打开，记忆窗口默认 50。</div></div></div>
+    <div class="step"><div class="idx">5</div><div class="body"><div class="title">写入指令 v1</div><div class="desc">粘贴完整指令（见上），保证"原文透传+条件合并"逻辑生效。</div></div></div>
+    <div class="step"><div class="idx">6</div><div class="body"><div class="title">回归发现 v1 漏洞</div><div class="desc">第二轮追问不调用工具，直接用上一轮 30 条商品判断"没有符合商品"。</div></div></div>
+    <div class="step"><div class="idx">7</div><div class="body"><div class="title">升级指令 v2</div><div class="desc">显式禁止"基于历史表格自行筛选"，所有条件变化必须重新调用工具。</div></div></div>
+    <div class="step"><div class="idx">8</div><div class="body"><div class="title">两轮回归通过</div><div class="desc">首轮、第二轮都重新触发工具调用，第二轮 query 完整合并条件。</div></div></div>
+    <div class="step"><div class="idx">9</div><div class="body"><div class="title">发布为 #7</div><div class="desc">草稿自动保存 → 点击发布 → 命名版本 → 发布更新。</div></div></div>
+  </section>
+
+  <!-- ====================== REGRESSION ====================== -->
+  <section id="tab-regression" class="panel hidden">
+    <h2>端到端回归</h2>
+    <p class="lead">用 Web App 跑两轮连续对话，验证条件透传、合并、重调三件事。</p>
+
+    <h3>第一轮</h3>
+    <div class="kv">
+      <div>用户输入</div><div><code>近30天上架的价格小于10元的连衣裙</code></div>
+      <div>实际工具 query</div><div><code>近30天上架的价格小于10元的连衣裙</code> （原文透传）</div>
+      <div>结果</div><div><span class="pill-ok">30 条商品表格正常</span></div>
+    </div>
+
+    <h3>第二轮</h3>
+    <div class="kv">
+      <div>用户输入</div><div><code>基于前面的商品结果帮我再筛选只要大码连衣裙类目的</code></div>
+      <div>实际工具 query</div><div><code>近30天上架、价格小于10元、类目为大码连衣裙的商品</code></div>
+      <div>结果</div><div><span class="pill-ok">30 条大码连衣裙表格</span>，含 <code>女装>大码女装>大码连衣裙</code> 类目</div>
+    </div>
+
+    <h3>关键运行明细</h3>
+    <table>
+      <thead><tr><th>运行 ID</th><th>轮次</th><th>耗时</th><th>工具调用</th><th>最终 query</th></tr></thead>
+      <tbody>
+        <tr><td><code>c6ef9c73…</code></td><td>第 1 轮</td><td>40.7s</td><td><span class="pill-ok">call_2pZr…</span></td><td>近30天上架的价格小于10元的连衣裙</td></tr>
+        <tr><td><code>c7e91620…</code></td><td>第 2 轮</td><td>29.6s</td><td><span class="pill-ok">call_Ikf4…</span></td><td>近30天上架、价格小于10元、类目为大码连衣裙的商品</td></tr>
+      </tbody>
+    </table>
+
+    <h3>页面渲染证据</h3>
+    <pre><span class="c">// 抓自 Dify Chatflow Web App</span>
+&lt;td class=<span class="s">"px-4 py-2 text-sm"</span> data-streamdown=<span class="s">"table-cell"</span>&gt;
+  &lt;div class=<span class="s">"markdown-img-wrapper"</span>&gt;
+    &lt;div data-testid=<span class="s">"image-gallery"</span>&gt;
+      &lt;img src=<span class="s">"https://cbu01.alicdn.com/img/ibank/...jpg"</span>&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/td&gt;</pre>
+
+    <h3>校验清单</h3>
+    <table>
+      <thead><tr><th>项</th><th>结果</th></tr></thead>
+      <tbody>
+        <tr><td>单轮完整原文透传</td><td><span class="pill-ok">OK</span></td></tr>
+        <tr><td>追问继承时间价格</td><td><span class="pill-ok">OK</span></td></tr>
+        <tr><td>追问用大码连衣裙覆盖原类目</td><td><span class="pill-ok">OK</span></td></tr>
+        <tr><td>两轮都触发 1688selector 工具调用</td><td><span class="pill-ok">OK</span></td></tr>
+        <tr><td>同一会话保留两轮问答</td><td><span class="pill-ok">OK</span></td></tr>
+        <tr><td>商品主图 CDN 加载</td><td><span class="pill-ok">OK</span></td></tr>
+        <tr><td>Markdown 表格可点图放大</td><td><span class="pill-ok">OK</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ====================== TROUBLE ====================== -->
+  <section id="tab-trouble" class="panel hidden">
+    <h2>故障与修复</h2>
+    <p class="lead">按时间倒序记录本次构建过程中的所有真实问题、原因、修复方式与教训。</p>
+
+    <table>
+      <thead>
+        <tr><th>#</th><th>现象</th><th>原因</th><th>修复</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>5</td>
+          <td><span class="pill-warn">上游 LLM Provider "Model is disabled"</span><br/>工具调用返回 <code>request failed: Model is disabled</code>。</td>
+          <td>Dify 当前工作区某个 LLM Provider 临时禁用，与主 Chatflow 逻辑无关。</td>
+          <td>下游直接调接口已能跑通；继续验证 query 正确性；待 Provider 恢复后跑回归。</td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td><span class="pill-warn">第二轮不调工具</span><br/>用户问"再筛选只要大码连衣裙类目的"，模型直接基于上一轮 30 条判断"没有符合商品"。</td>
+          <td>指令虽要求合并条件，但未显式禁止"基于历史表格自行筛选"。</td>
+          <td>指令 v2：增加"所有条件变化必须重新调用工具"+"禁止本地筛选历史表格"。两轮回归确认均触发了 1688selector。</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td><span class="pill-warn">类目 ID 缺失</span><br/>下游搜索请求 <code>categoryIdList</code> 为空，导致商品类目错乱。</td>
+          <td>原代码读 <code>data["categoryTree"]</code>，但 1688 接口真实返回字段是 <code>result</code>。</td>
+          <td>Code 节点改为 <code>data.get("categoryTree") or data.get("result") or []</code>；发布为下游 #87。</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td><span class="pill-warn">主 Chatflow 聊天记忆关闭</span><br/>第二轮追问时没有上下文继承条件。</td>
+          <td>默认 Agent 节点"记忆"开关是关闭的。</td>
+          <td>开启 Agent 记忆、记忆窗口。窗口曾尝试改 20 但持久化为 50，不影响核心功能。</td>
+        </tr>
+        <tr>
+          <td>1</td>
+          <td><span class="pill-warn">主 Chatflow 仅截取商品词</span><br/>用户输入 "近30天上架的连衣裙"，下游 query 变成 "连衣裙"，时间和价格被吃掉。</td>
+          <td>原设计让 Chatflow 自行"提取关键词"再传下游。</td>
+          <td>改为"单轮原文透传"，仅在上下文追问时合并条件。下游天然拿到完整 query。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>教训</h3>
+    <ul>
+      <li>Chatflow 与 Workflow 职责要清晰：前者管会话上下文，后者管业务执行。</li>
+      <li>无状态 Workflow 不应假设调用方记得上次条件，所有追问条件必须在调用方合并完整后再传。</li>
+      <li>指令要给模型"禁止动作"，明确禁止项比罗列允许项更稳。</li>
+      <li>渲染层（Markdown 表格里的图片）能力应作为链路验收证据之一。</li>
+    </ul>
+  </section>
+
+  <footer>
+    由 <code>docs/dify-1688-build-log/index.html</code> 自动生成 · 分支 <code>docs/dify-1688-build-log</code> · 后续如需追溯请直接打开本 HTML
+  </footer>
+</div>
+
+<script>
+  (function(){
+    var btns=document.querySelectorAll('.tabs button');
+    var sections=['tab-overview','tab-workflow','tab-chatflow','tab-regression','tab-trouble'];
+    function show(name){
+      btns.forEach(function(b){b.classList.toggle('active',b.dataset.tab===name);});
+      sections.forEach(function(s){
+        var el=document.getElementById(s);
+        if(!el) return;
+        el.classList.toggle('hidden',s!=='tab-'+name);
+      });
+      try{history.replaceState(null,'','#'+name);}catch(e){}
+    }
+    btns.forEach(function(b){b.addEventListener('click',function(){show(b.dataset.tab);});});
+    var hash=location.hash.replace('#','');
+    if(sections.indexOf('tab-'+hash)>=0) show(hash); else show('overview');
+  })();
+</script>
+</body>
+</html>
