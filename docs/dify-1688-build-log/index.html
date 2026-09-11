@@ -43,9 +43,24 @@
   .panel h2{margin:0 0 6px;font-size:17px;color:#111827}
   .panel h3{margin:18px 0 6px;font-size:14px;color:var(--accent-2);display:flex;align-items:center;gap:10px}
   .panel h3 .tag{font-size:11px;color:#4b5563;background:var(--tab);border:1px solid var(--line);padding:2px 8px;border-radius:99px;font-weight:500}
+  /* 通用 .tag 状态徽标（已用 / 未用 / 写死 / 必填） */
+  .tag{font-size:11px;padding:2px 8px;border-radius:99px;font-weight:500;display:inline-block;line-height:1.4}
+  .tag.on{color:#065f46;background:#d1fae5;border:1px solid #6ee7b7}
+  .tag.off{color:#6b7280;background:#f3f4f6;border:1px solid #e5e7eb}
+  .tag.fix{color:#92400e;background:#fef3c7;border:1px solid #fcd34d}
+  /* 详情 <details> 折叠 */
+  details{margin:10px 0;border:1px solid var(--line);border-radius:10px;background:var(--panel-2);padding:0}
+  details summary{cursor:pointer;padding:10px 14px;font-weight:600;color:var(--text);list-style:revert}
+  details[open] summary{border-bottom:1px solid var(--line)}
+  details > table{margin:8px 14px 14px}
+  /* KV 表格 */
+  table.kv,table.kv-table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0}
+  table.kv th, table.kv td, table.kv-table th, table.kv-table td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+  table.kv th, table.kv-table th{background:var(--panel-2);font-weight:600;color:var(--muted);font-size:12px}
+  table.kv code, table.kv-table code{font-family:var(--mono);font-size:12px;background:var(--kbd);padding:1px 5px;border-radius:4px}
   .panel .lead{color:var(--muted);margin:0 0 14px}
-  .kv{display:grid;grid-template-columns:170px 1fr;gap:6px 14px;font-size:13px}
-  .kv div:nth-child(odd){color:var(--muted)}
+  .kv:not(table){display:grid;grid-template-columns:170px 1fr;gap:6px 14px;font-size:13px}
+  .kv:not(table) div:nth-child(odd){color:var(--muted)}
   pre{background:var(--code);border:1px solid var(--code-border);border-radius:10px;padding:12px 14px;overflow:auto;line-height:1.55;font-size:12.5px;color:var(--code-text);margin:10px 0;white-space:pre-wrap;word-break:break-word}
   pre .k{color:#2056d6}
   pre .s{color:#0a8a5e}
@@ -116,6 +131,7 @@
     <button data-tab="chatflow" role="tab">店雷达1688 <span class="pill">3 节点</span></button>
     <button data-tab="regression" role="tab">端到端回归 <span class="pill">2 轮</span></button>
     <button data-tab="trouble" role="tab">故障与修复 <span class="pill">5 条</span></button>
+    <button data-tab="api" role="tab">接口字段参数 <span class="pill">22</span></button>
   </div>
 
   <!-- ====================== OVERVIEW ====================== -->
@@ -798,6 +814,308 @@ from datetime import datetime, timedelta
     </div>
   </section>
 
+  <!-- ====================== API FIELDS ====================== -->
+  <section id="tab-api" class="panel hidden">
+    <h2>接口字段参数 · product_ai_search_list</h2>
+    <p class="lead">
+      来源：<a href="https://u0pbwq6c8d.apifox.cn/490008749e0" target="_blank" rel="noopener">Apifox 文档 5. 选品库列表</a>（POST <code>/api/offerSearch/queryList</code>）+ Dify MCP <code>paramSchemas</code> 实际抓取 + 试运行（run <code>ab89ea60-2ae2-4d7c-a71e-a04e045229cb</code>，status=succeeded）结果核对。
+      当前下游 Workflow 已用字段：<span class="pill">5</span>；可加字段：<span class="pill">17</span>。
+    </p>
+
+    <h3>一、输入参数（request.body）</h3>
+    <h4>1. 顶层（非 query 字段）</h4>
+    <table class="kv">
+      <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th><th>当前状态</th></tr></thead>
+      <tbody>
+        <tr><td><code>pageIndex</code></td><td>int</td><td>✅</td><td>页码（默认 1）</td><td><span class="tag on">已用</span></td></tr>
+        <tr><td><code>pageSize</code></td><td>int</td><td>✅</td><td>分页大小（默认 10）</td><td><span class="tag on">已用</span></td></tr>
+        <tr><td><code>query</code></td><td>object</td><td>✅</td><td>查询条件（见下）</td><td><span class="tag on">已用</span></td></tr>
+        <tr><td><code>sortField</code></td><td>string</td><td>—</td><td>排序字段（如 <code>bookedCount30d</code> / <code>saleVolume30d</code> / <code>offerCreateTime</code>）</td><td><span class="tag off">未用</span></td></tr>
+        <tr><td><code>sortType</code></td><td>string</td><td>—</td><td>排序类型：<code>desc</code> / <code>asc</code></td><td><span class="tag off">未用</span></td></tr>
+      </tbody>
+    </table>
+
+    <h4>2. query 字段（共 22 类，70+ 子字段）</h4>
+
+    <details open>
+      <summary><strong>��️ 关键词 / 类目（9 个字段）</strong></summary>
+      <table class="kv">
+        <thead><tr><th>字段</th><th>类型</th><th>说明</th><th>当前状态</th></tr></thead>
+        <tbody>
+          <tr><td><code>keyWord</code></td><td>string</td><td>搜索关键字，最多 50 字符</td><td><span class="tag on">已用</span></td></tr>
+          <tr><td><code>categoryIdList</code></td><td>array[string]</td><td>类目 ID（最多 20 个）</td><td><span class="tag on">已用</span></td></tr>
+          <tr><td><code>aiKeyword.requiredKeywords</code></td><td>array</td><td>必含词</td><td><span class="tag on">已用</span></td></tr>
+          <tr><td><code>aiKeyword.expandedKeywords</code></td><td>array</td><td>AI 扩展关键词</td><td><span class="tag on">已用</span></td></tr>
+          <tr><td><code>aiKeyword.expandedTokenGroups</code></td><td>array</td><td>扩展词分词结果</td><td><span class="tag on">已用</span></td></tr>
+          <tr><td><code>aiKeyword.modifiers</code></td><td>string</td><td>修饰词</td><td><span class="tag on">已用</span></td></tr>
+          <tr><td><code>aiKeyword.brand</code></td><td>string</td><td>品牌词</td><td><span class="tag on">已用</span></td></tr>
+          <tr><td><code>searchType</code></td><td>int</td><td>1-模糊 / 2-词组 / 3-精准 / 4-AI</td><td><span class="tag off">未用</span></td></tr>
+          <tr><td><code>itemNo</code></td><td>string</td><td>货号</td><td><span class="tag off">未用</span></td></tr>
+          <tr><td><code>shopScreen</code></td><td>string</td><td>包含卖家</td><td><span class="tag off">未用</span></td></tr>
+          <tr><td><code>shopMaskWord</code></td><td>string</td><td>排除卖家</td><td><span class="tag off">未用</span></td></tr>
+          <tr><td><code>offerMaskWord</code></td><td>string</td><td>排除商品关键词</td><td><span class="tag off">未用</span></td></tr>
+          <tr><td><code>productIds</code></td><td>string</td><td>商品 ID 集合</td><td><span class="tag off">未用</span></td></tr>
+          <tr><td><code>goodsUrl</code></td><td>string</td><td>商品链接</td><td><span class="tag off">未用</span></td></tr>
+          <tr><td><code>shopUrl</code></td><td>string</td><td>店铺链接</td><td><span class="tag off">未用</span></td></tr>
+        </tbody>
+      </table>
+    </details>
+
+    <details open>
+      <summary><strong>�� 价格（4 个字段）⭐</strong></summary>
+      <table class="kv">
+        <thead><tr><th>字段</th><th>类型</th><th>说明</th><th>当前状态</th></tr></thead>
+        <tbody>
+          <tr><td><code>beginPrice</code></td><td>number</td><td><strong>起始批发价</strong></td><td><span class="tag on">已用</span></td></tr>
+          <tr><td><code>endPrice</code></td><td>number</td><td><strong>结束批发价</strong></td><td><span class="tag on">已用</span></td></tr>
+          <tr><td><code>beginConsignPrice</code></td><td>number</td><td>起始代发价</td><td><span class="tag off">未用</span></td></tr>
+          <tr><td><code>endConsignPrice</code></td><td>number</td><td>结束代发价</td><td><span class="tag off">未用</span></td></tr>
+        </tbody>
+      </table>
+    </details>
+
+    <details open>
+      <summary><strong>�� 时间（4 个字段）⭐</strong></summary>
+      <table class="kv">
+        <thead><tr><th>字段</th><th>类型</th><th>说明</th><th>当前状态</th></tr></thead>
+        <tbody>
+          <tr><td><code>beginOfferCreateTime</code></td><td>string</td><td><strong>起始上新时间</strong>（yyyy-MM-dd）</td><td><span class="tag on">已用</span></td></tr>
+          <tr><td><code>endOfferCreateTime</code></td><td>string</td><td><strong>结束上新时间</strong>（yyyy-MM-dd）</td><td><span class="tag on">已用</span></td></tr>
+          <tr><td><code>cycle</code></td><td>string</td><td><strong>统计周期</strong>：1 / 3 / 7 / 30（默认 30）</td><td><span class="tag fix">写死 30</span></td></tr>
+          <tr><td><code>sendTime</code></td><td>int[]</td><td>发货时间多选：24 / 48 / 72 小时</td><td><span class="tag off">未用</span></td></tr>
+        </tbody>
+      </table>
+    </details>
+
+    <details>
+      <summary><strong>�� 起批量（2 个字段）</strong></summary>
+      <table class="kv">
+        <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>beginStartQuantity</code></td><td>int</td><td>起始起批量</td></tr>
+          <tr><td><code>endStartQuantity</code></td><td>int</td><td>结束起批量</td></tr>
+        </tbody>
+      </table>
+    </details>
+
+    <details>
+      <summary><strong>�� 销量 / 销售（10 个字段）</strong></summary>
+      <table class="kv">
+        <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>beginBookedCount</code></td><td>int</td><td>起始销售笔数</td></tr>
+          <tr><td><code>endBookedCount</code></td><td>int</td><td>结束销售笔数</td></tr>
+          <tr><td><code>beginSaleCount</code></td><td>int</td><td>起始销售件数</td></tr>
+          <tr><td><code>endSaleCount</code></td><td>int</td><td>结束销售件数</td></tr>
+          <tr><td><code>beginSaleVolume</code></td><td>number</td><td>起始销售额</td></tr>
+          <tr><td><code>endSaleVolume</code></td><td>number</td><td>结束销售额</td></tr>
+          <tr><td><code>beginOfferBookedCount</code></td><td>int64</td><td>起始总笔数</td></tr>
+          <tr><td><code>endOfferBookedCount</code></td><td>int64</td><td>结束总笔数</td></tr>
+          <tr><td><code>beginOfferSaleCount</code></td><td>int64</td><td>起始总件数</td></tr>
+          <tr><td><code>endOfferSaleCount</code></td><td>int64</td><td>结束总件数</td></tr>
+        </tbody>
+      </table>
+    </details>
+
+    <details>
+      <summary><strong>�� 复购率 / 集中率（4 个字段）</strong></summary>
+      <table class="kv">
+        <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>beginOfferRepurchaseRate</code></td><td>number</td><td>起始复购率</td></tr>
+          <tr><td><code>endOfferRepurchaseRate</code></td><td>number</td><td>结束复购率</td></tr>
+          <tr><td><code>beginPurchaseRate</code></td><td>number</td><td>起始采购集中率</td></tr>
+          <tr><td><code>endPurchaseRate</code></td><td>number</td><td>结束采购集中率</td></tr>
+        </tbody>
+      </table>
+    </details>
+
+    <details>
+      <summary><strong>��️ 商品属性（10 个字段）</strong></summary>
+      <table class="kv">
+        <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>offerType</code></td><td>int</td><td>商品类型 1-货号 / 2-新发</td></tr>
+          <tr><td><code>newOffer</code></td><td>bool</td><td>新发商品</td></tr>
+          <tr><td><code>companyType</code></td><td>int</td><td>公司类型 0-不限 / 1-店铺 / 2-工厂</td></tr>
+          <tr><td><code>crossSources</code></td><td>int</td><td>跨境专供货源 0-否 / 1-是</td></tr>
+          <tr><td><code>sourceType</code></td><td>int</td><td>来源类型 1-正常 / 2-跨境</td></tr>
+          <tr><td><code>authOwnBrand</code></td><td>int</td><td>授权自有品牌 0-否 / 1-是</td></tr>
+          <tr><td><code>supplyType</code></td><td>string</td><td>供货类型 0-不限 / 1-跨境 / 2-内贸</td></tr>
+          <tr><td><code>offerSupplyType</code></td><td>string</td><td>商品类型 0-不限 / 1-跨境 / 2-内贸</td></tr>
+          <tr><td><code>packageStatus</code></td><td>array[int]</td><td>包装 1-未披露 / 2-仅披露重量 / 3-完整件重尺</td></tr>
+          <tr><td><code>image</code></td><td>string</td><td>图片</td></tr>
+        </tbody>
+      </table>
+    </details>
+
+    <details>
+      <summary><strong>�� 卖家属性（7 个字段）</strong></summary>
+      <table class="kv">
+        <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>beginTpYear</code></td><td>int</td><td>开始年限</td></tr>
+          <tr><td><code>endTpYear</code></td><td>int</td><td>结束年限</td></tr>
+          <tr><td><code>shiLiType</code></td><td>array[string]</td><td>店铺类型 superFactory / Power / TrustPass</td></tr>
+          <tr><td><code>shopService</code></td><td>array[string]</td><td>卖家服务 4057409-安心购 / 888777-深度认证</td></tr>
+          <tr><td><code>shopIds</code></td><td>array[string]</td><td>店铺 ID 列表</td></tr>
+          <tr><td><code>location</code></td><td>array[object]</td><td>卖家所属地（按省份+城市）</td></tr>
+          <tr><td><code>location2</code></td><td>array[object]</td><td>卖家所属地（备选）</td></tr>
+        </tbody>
+      </table>
+    </details>
+
+    <details>
+      <summary><strong>�� 代发 / 物流（6 个字段）</strong></summary>
+      <table class="kv">
+        <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>proxyRights</code></td><td>array[string]</td><td>代发权益 1988226 / 4360897 / 449154</td></tr>
+          <tr><td><code>faceToFaceSupport</code></td><td>array[string]</td><td>面单支持 441218-淘宝 / 386434-抖音 / 422914-拼多多 / 422978-小红书 / 386370-快手</td></tr>
+          <tr><td><code>buyerProtections</code></td><td>string</td><td>权益保障</td></tr>
+          <tr><td><code>ls48begin</code> / <code>ls48End</code></td><td>number</td><td>48 小时揽收率区间</td></tr>
+          <tr><td><code>offerLgt24h</code> / <code>offerLgt48h</code></td><td>array[string]</td><td>揽收率分段（&lt;70% / 70-90 / &gt;90）</td></tr>
+          <tr><td><code>kjServices</code></td><td>array[string]</td><td>跨境服务 1-4</td></tr>
+          <tr><td><code>tradingConditions</code></td><td>array[string]</td><td>交易条件 1-一件起订 / 2-批发包邮 / 3-一件代发包邮</td></tr>
+        </tbody>
+      </table>
+    </details>
+
+    <details>
+      <summary><strong>�� 销售地区 / 平台（2 个字段）</strong></summary>
+      <table class="kv">
+        <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>salesRegion</code></td><td>array[string]</td><td>主要销售地区</td></tr>
+          <tr><td><code>salesPlatform</code></td><td>array[string]</td><td>主要下游平台</td></tr>
+        </tbody>
+      </table>
+    </details>
+
+    <details>
+      <summary><strong>�� 增长率 / 榜单（7 个字段）</strong></summary>
+      <table class="kv">
+        <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>bookedCount7dGrowthType</code></td><td>int</td><td>7 日订单增长类型</td></tr>
+          <tr><td><code>beginBookedCount7dGrowthRate</code></td><td>number</td><td>起始 7 日订单增长率</td></tr>
+          <tr><td><code>endBookedCount7dGrowthRate</code></td><td>number</td><td>结束 7 日订单增长率</td></tr>
+          <tr><td><code>type</code></td><td>int</td><td>查询类型 1-飙升</td></tr>
+          <tr><td><code>date</code></td><td>string</td><td>查询时间</td></tr>
+          <tr><td><code>isRate</code></td><td>bool</td><td>复购率商品榜</td></tr>
+          <tr><td><code>pageType</code></td><td>int</td><td>1-日榜 / 2-周榜 / 3-月榜</td></tr>
+        </tbody>
+      </table>
+    </details>
+
+    <details>
+      <summary><strong>�� SKU / 货量 / 重量（4 个字段）</strong></summary>
+      <table class="kv">
+        <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>beginSkuCount</code> / <code>endSkuCount</code></td><td>int</td><td>SKU 数量区间</td></tr>
+          <tr><td><code>beginBeFavedCount</code> / <code>endBeFavedCount</code></td><td>int</td><td>粉丝数区间</td></tr>
+          <tr><td><code>beginWeight</code> / <code>endWeight</code></td><td>int</td><td>重量区间</td></tr>
+          <tr><td><code>limitNum</code></td><td>int</td><td>导出条数</td></tr>
+        </tbody>
+      </table>
+    </details>
+
+    <details>
+      <summary><strong>�� 同款 / 关联 / 合并（4 个字段）</strong></summary>
+      <table class="kv">
+        <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>isSameOffers</code></td><td>bool</td><td>站内同款获取统计数据</td></tr>
+          <tr><td><code>relate</code></td><td>int</td><td>精确匹配类型 1-关联更多商品</td></tr>
+          <tr><td><code>id</code></td><td>string</td><td>站内同款查询商品主键 ID</td></tr>
+          <tr><td><code>merge</code></td><td>bool</td><td>合并相似商品</td></tr>
+        </tbody>
+      </table>
+    </details>
+
+    <details>
+      <summary><strong>�� 其他（5 个字段）</strong></summary>
+      <table class="kv">
+        <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>groupId</code></td><td>string</td><td>供应商分组 ID</td></tr>
+          <tr><td><code>tagId</code></td><td>string</td><td>供应商标签 ID</td></tr>
+          <tr><td><code>certificateNameList</code></td><td>array[string]</td><td>证书名称</td></tr>
+          <tr><td><code>attributeList</code> / <code>attributeIdList</code></td><td>array[string]</td><td>属性 / 属性 ID</td></tr>
+          <tr><td><code>module</code></td><td>string</td><td>模块</td></tr>
+        </tbody>
+      </table>
+    </details>
+
+    <h3>二、输出参数（response.body）</h3>
+    <h4>1. 顶层响应</h4>
+    <pre><span class="c">// 200 OK</span>
+{
+  <span class="k">"code"</span>: <span class="nb">0</span>,
+  <span class="k">"msg"</span>: <span class="s">"string"</span>,
+  <span class="k">"result"</span>: {
+    <span class="k">"pageIndex"</span>: <span class="nb">1</span>,
+    <span class="k">"pageSize"</span>: <span class="nb">30</span>,
+    <span class="k">"totalCount"</span>: <span class="nb">100</span>,
+    <span class="k">"totalPages"</span>: <span class="nb">4</span>,
+    <span class="k">"list"</span>: [ <span class="c">/* OfferSearchResp[] */</span> ],
+    <span class="k">"extraMap"</span>: {}
+  }
+}</pre>
+
+    <h4>2. result.list[] 单个商品（OfferSearchResp）</h4>
+    <table class="kv">
+      <thead><tr><th>字段</th><th>类型</th><th>说明</th><th>商品转表格节点使用</th></tr></thead>
+      <tbody>
+        <tr><td><code>offerId</code></td><td>string</td><td>1688 商品 ID</td><td><span class="tag on">✅</span></td></tr>
+        <tr><td><code>title</code></td><td>string</td><td>商品标题</td><td><span class="tag on">✅</span></td></tr>
+        <tr><td><code>image</code></td><td>string</td><td>主图 URL</td><td><span class="tag on">✅ Markdown 图片</span></td></tr>
+        <tr><td><code>imageList</code></td><td>array[string]</td><td>主图列表</td><td><span class="tag off">—</span></td></tr>
+        <tr><td><code>price</code></td><td>number/string</td><td>批发价</td><td><span class="tag on">✅</span></td></tr>
+        <tr><td><code>consignPrice</code></td><td>number/string</td><td>代发价</td><td><span class="tag on">✅</span></td></tr>
+        <tr><td><code>quantityPrices</code></td><td>array</td><td>阶梯价 <code>[{"quantity":"X","value":"Y"}]</code></td><td><span class="tag on">✅ 阶梯价</span></td></tr>
+        <tr><td><code>unit</code></td><td>string</td><td>单位</td><td><span class="tag on">✅</span></td></tr>
+        <tr><td><code>offerRepurchaseRate</code></td><td>number</td><td>复购率</td><td><span class="tag on">✅</span></td></tr>
+        <tr><td><code>buyerRate</code> / <code>positiveRate</code></td><td>number</td><td>好评率</td><td><span class="tag on">✅</span></td></tr>
+        <tr><td><code>shopId</code></td><td>string</td><td>店铺 ID</td><td><span class="tag on">✅</span></td></tr>
+        <tr><td><code>shopUrl</code></td><td>string</td><td>店铺链接</td><td><span class="tag on">✅</span></td></tr>
+        <tr><td><code>shopName</code></td><td>string</td><td>店铺名</td><td><span class="tag on">✅</span></td></tr>
+        <tr><td><code>shopLocation</code></td><td>string</td><td>店铺所在地</td><td><span class="tag on">✅</span></td></tr>
+        <tr><td><code>categoryId</code> / <code>categoryName</code></td><td>string</td><td>类目</td><td><span class="tag on">✅</span></td></tr>
+        <tr><td><code>offerCreateTime</code></td><td>string</td><td>上架时间</td><td><span class="tag on">✅</span></td></tr>
+        <tr><td><code>bookedCount30d</code></td><td>int</td><td>30 天销售笔数</td><td><span class="tag on">✅ 近30天数据</span></td></tr>
+        <tr><td><code>saleVolume30d</code></td><td>number</td><td>30 天销售额</td><td><span class="tag off">—</span></td></tr>
+        <tr><td><code>orderCount30d</code></td><td>int</td><td>30 天订单数</td><td><span class="tag off">—</span></td></tr>
+      </tbody>
+    </table>
+
+    <h3>三、当前已用 / 未用字段总览</h3>
+    <table class="kv">
+      <thead><tr><th>维度</th><th>已用</th><th>总共</th><th>待补</th></tr></thead>
+      <tbody>
+        <tr><td>顶层（pageIndex / pageSize / query / sortField / sortType）</td><td>3</td><td>5</td><td>2</td></tr>
+        <tr><td>query 输入字段（22 类）</td><td>5 字段</td><td>70+</td><td>大部分</td></tr>
+        <tr><td>输出字段（list[]）</td><td>13+</td><td>20+</td><td>部分</td></tr>
+      </tbody>
+    </table>
+
+    <h3>四、推荐接入顺序（按用户使用频率）</h3>
+    <ol>
+      <li><strong>价格区间</strong>：<code>beginPrice</code> / <code>endPrice</code>（用户最高频）</li>
+      <li><strong>上架时间</strong>：<code>beginOfferCreateTime</code> / <code>endOfferCreateTime</code></li>
+      <li><strong>统计周期</strong>：<code>cycle</code>（7/30，从写死改为可调）</li>
+      <li><strong>排序</strong>：<code>sortField</code> + <code>sortType</code></li>
+      <li><strong>商品类型 / 公司类型</strong>：<code>offerType</code> / <code>companyType</code></li>
+      <li><strong>代发权益</strong>：<code>proxyRights</code></li>
+      <li><strong>所在地</strong>：<code>location</code>（按省份+城市）</li>
+    </ol>
+
+    <p class="lead">
+      <strong>对接方式</strong>：修改 <code>搜词分析并生成JSON</code> 节点的 prompt，让 LLM 直接输出结构化字段；删除 / 弱化 <code>搜词转JSON</code> 的正则层；让 <code>product_ai_search_list</code> 的 <code>tool_parameters</code> 直接接 LLM 输出字段。
+    </p>
+  </section>
+
   <footer>
     由 <code>docs/dify-1688-build-log/index.html</code> 自动生成 · 分支 <code>docs/dify-1688-build-log</code> · 内容取自两个应用的真实 Draft DSL 与运行 API
   </footer>
@@ -806,7 +1124,7 @@ from datetime import datetime, timedelta
 <script>
   (function(){
     var btns=document.querySelectorAll('.tabs button');
-    var sections=['tab-overview','tab-workflow','tab-chatflow','tab-regression','tab-trouble'];
+    var sections=['tab-overview','tab-workflow','tab-chatflow','tab-regression','tab-trouble','tab-api'];
     function show(name){
       btns.forEach(function(b){b.classList.toggle('active',b.dataset.tab===name);});
       sections.forEach(function(s){
