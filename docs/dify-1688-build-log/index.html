@@ -1068,25 +1068,37 @@ from datetime import datetime, timedelta
     <table class="kv">
       <thead><tr><th>字段</th><th>类型</th><th>说明</th><th>商品转表格节点使用</th></tr></thead>
       <tbody>
+      <tbody>
         <tr><td><code>offerId</code></td><td>string</td><td>1688 商品 ID</td><td><span class="tag on">✅</span></td></tr>
         <tr><td><code>title</code></td><td>string</td><td>商品标题</td><td><span class="tag on">✅</span></td></tr>
         <tr><td><code>image</code></td><td>string</td><td>主图 URL</td><td><span class="tag on">✅ Markdown 图片</span></td></tr>
         <tr><td><code>imageList</code></td><td>array[string]</td><td>主图列表</td><td><span class="tag off">—</span></td></tr>
         <tr><td><code>price</code></td><td>number/string</td><td>批发价</td><td><span class="tag on">✅</span></td></tr>
-        <tr><td><code>consignPrice</code></td><td>number/string</td><td>代发价</td><td><span class="tag on">✅</span></td></tr>
-        <tr><td><code>quantityPrices</code></td><td>array</td><td>阶梯价 <code>[{"quantity":"X","value":"Y"}]</code></td><td><span class="tag on">✅ 阶梯价</span></td></tr>
+        <tr><td><code>consignPrice</code></td><td>number/string</td><td>代发价</td><td><span class="tag on">✅ v2.10 独立列</span></td></tr>
+        <tr><td><code>quantityPrices</code></td><td>array</td><td>阶梯价</td><td><span class="tag on">✅</span></td></tr>
+        <tr><td><code>quantityBegin</code></td><td>int/string</td><td>起订量</td><td><span class="tag on">✅ 采购列</span></td></tr>
         <tr><td><code>unit</code></td><td>string</td><td>单位</td><td><span class="tag on">✅</span></td></tr>
-        <tr><td><code>offerRepurchaseRate</code></td><td>number</td><td>复购率</td><td><span class="tag on">✅</span></td></tr>
-        <tr><td><code>buyerRate</code> / <code>positiveRate</code></td><td>number</td><td>好评率</td><td><span class="tag on">✅</span></td></tr>
+        <tr><td><code>offerCreateTime</code></td><td>string</td><td>上架时间</td><td><span class="tag on">✅ v2.10 独立列</span></td></tr>
+        <tr><td><code>offerRepurchaseRate</code></td><td>number</td><td>复购率</td><td><span class="tag on">✅ 复购率列</span></td></tr>
+        <tr><td><code>bookedCount30d</code></td><td>int</td><td>30 天订单数</td><td><span class="tag on">✅ v2.10 近30天</span></td></tr>
+        <tr><td><code>saleVolume30d</code> / <code>saleCount30d</code></td><td>int</td><td>30 天件数</td><td><span class="tag on">✅ v2.10 近30天</span></td></tr>
+        <tr><td><code>gmv30d</code></td><td>number</td><td>30 天销售额</td><td><span class="tag on">✅ v2.10 近30天</span></td></tr>
+        <tr><td><code>totalBookedCount</code> / <code>bookedCount</code></td><td>int</td><td>累计总订单数</td><td><span class="tag on">✅ v2.10 总销量列</span></td></tr>
+        <tr><td><code>totalSaleCount</code></td><td>int</td><td>累计总件数</td><td><span class="tag on">✅ v2.10 总销量列</span></td></tr>
         <tr><td><code>shopId</code></td><td>string</td><td>店铺 ID</td><td><span class="tag on">✅</span></td></tr>
         <tr><td><code>shopUrl</code></td><td>string</td><td>店铺链接</td><td><span class="tag on">✅</span></td></tr>
-        <tr><td><code>shopName</code></td><td>string</td><td>店铺名</td><td><span class="tag on">✅</span></td></tr>
-        <tr><td><code>shopLocation</code></td><td>string</td><td>店铺所在地</td><td><span class="tag on">✅</span></td></tr>
-        <tr><td><code>categoryId</code> / <code>categoryName</code></td><td>string</td><td>类目</td><td><span class="tag on">✅</span></td></tr>
-        <tr><td><code>offerCreateTime</code></td><td>string</td><td>上架时间</td><td><span class="tag on">✅</span></td></tr>
-        <tr><td><code>bookedCount30d</code></td><td>int</td><td>30 天销售笔数</td><td><span class="tag on">✅ 近30天数据</span></td></tr>
-        <tr><td><code>saleVolume30d</code></td><td>number</td><td>30 天销售额</td><td><span class="tag off">—</span></td></tr>
-        <tr><td><code>orderCount30d</code></td><td>int</td><td>30 天订单数</td><td><span class="tag off">—</span></td></tr>
+        <tr><td><code>shopName</code></td><td>string</td><td>店铺名</td><td><span class="tag on">✅ v2.10 供应商列</span></td></tr>
+        <tr><td><code>shopService</code></td><td>array/string</td><td>卖家服务</td><td><span class="tag on">✅ v2.10 保障列</span></td></tr>
+        <tr><td><code>deliveryTime</code></td><td>string</td><td>48/72 小时发货</td><td><span class="tag on">✅ v2.10 保障列</span></td></tr>
+        <tr><td><code>tpYear</code></td><td>int</td><td>TP 诚信通年限</td><td><span class="tag on">✅ v2.10 供应商列</span></td></tr>
+        <tr><td><code>shiLiType</code></td><td>array</td><td>卖家会员类型</td><td><span class="tag on">✅ v2.10 供应商列</span></td></tr>
+        <tr><td><code>companyType</code></td><td>int/string</td><td>公司类型</td><td><span class="tag on">✅ v2.10 所在地列</span></td></tr>
+        <tr><td><code>company</code></td><td>string</td><td>店铺类型（工厂/店铺）</td><td><span class="tag on">✅ v2.10 所在地列</span></td></tr>
+        <tr><td><code>province</code> / <code>city</code></td><td>string</td><td>省份 / 城市</td><td><span class="tag on">✅ v2.10 所在地列</span></td></tr>
+        <tr><td><code>categoryId</code> / <code>categoryName</code></td><td>string</td><td>类目</td><td><span class="tag on">✅ v2.10 类目列</span></td></tr>
+        <tr><td><code>buyerProtections</code></td><td>string</td><td>权益保障</td><td><span class="tag on">✅ v2.10 保障列</span></td></tr>
+        <tr><td><code>proxyRights</code></td><td>array</td><td>代发权益枚举</td><td><span class="tag on">✅ v2.10 保障列</span></td></tr>
+        <tr><td><code>faceToFaceSupport</code></td><td>array</td><td>面单支持枚举</td><td><span class="tag on">✅ v2.10 保障列</span></td></tr>
       </tbody>
     </table>
 
@@ -1139,6 +1151,7 @@ from datetime import datetime, timedelta
     if(sections.indexOf('tab-'+hash)>=0) show(hash); else show('overview');
   })();
 </script>
+<!-- V2.10 update 2026-09-11 17:30 (Asia/Shanghai)：商品转表格节点升级为 11 列新版，新增 5 个字段渲染：总销量（总订单数/总件数）、代发权益枚举映射（1988226→一件代发 / 4360897→代发包邮 / 449154→先采后付）、面单支持枚举映射（441218→淘宝 / 386434→抖音 / 422914→拼多多 / 422978→小红书 / 386370→快手）、权益保障、TP 诚信通年限强化显示；保障/实力/代发/面单合并为 1 列；新增接口字段参数 Tab（22 类输入字段 + 输出字段）。 -->
 <!-- V2.9 update 2026-09-10 21:38 (Asia/Shanghai)：商品转表格节点升级为 10 列新版；下游 Workflow 1688选品库发布版 #91；工作流作为工具 1688selector 同步成功 synced=true；Chatflow 店雷达1688 已验证新版表格。 -->
 </body>
 </html>
