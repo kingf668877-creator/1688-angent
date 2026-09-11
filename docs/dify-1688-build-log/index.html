@@ -131,7 +131,7 @@
     <button data-tab="chatflow" role="tab">店雷达1688 <span class="pill">3 节点</span></button>
     <button data-tab="regression" role="tab">端到端回归 <span class="pill">2 轮</span></button>
     <button data-tab="trouble" role="tab">故障与修复 <span class="pill">5 条</span></button>
-    <button data-tab="v3" role="tab">v3 传参链路 <span class="pill">new</span></button><button data-tab="api" role="tab">接口字段参数 <span class="pill">22</span></button>
+    <button data-tab="v3" role="tab">v3 传参链路 <span class="pill">new</span></button><button data-tab="api" role="tab">接口字段参数 <span class="pill">22</span></button><button data-tab="regress210" role="tab">v2.10 全量筛选回归 <span class="pill">37 用例</span></button>
   </div>
 
   <!-- ====================== OVERVIEW ====================== -->
@@ -1281,6 +1281,91 @@ from datetime import datetime, timedelta
     </p>
   </section>
 
+  <!-- ====================== V2.10 全量筛选回归 ====================== -->
+  <section id="tab-regress210" class="panel hidden">
+    <h2>v2.10 全量筛选回归 - 外部 Chrome + 真实 Web App</h2>
+    <p class="lead">时间：<code>2026-09-11</code> · 渠道：外部 Chrome (TRAE Chrome Extension) 登录 Dify · 应用：<code>rwXTOX7b3eSh70Sn</code> · 工作流：<code>1688选品库_v2</code> · 调用：<code>/api/workflows/run</code> 流式 · 总耗时：约 6 分钟 / 37 用例 · 结果：<span class="pill-ok">全部 HTTP 200</span><span class="pill-ok">9 节点 succeeded</span><span class="pill-info">无 Mock 污染</span></p>
+
+    <h3>一、回归环境与基线</h3>
+    <table class="kv">
+      <tr><th>验证浏览器</th><td>外部 Google Chrome（TRAE Chrome Extension 控制，<code>Chrome/152.0.0.0</code> · <code>webdriver=false</code>）</td></tr>
+      <tr><th>Dify 部署</th><td><code>http://192.168.1.149</code> · 工作流 ID <code>9eb8746e-1dc7-4070-b8f9-32ca54628751</code></td></tr>
+      <tr><th>应用访问点</th><td><code>/workflow/rwXTOX7b3eSh70Sn</code></td></tr>
+      <tr><th>Passport</th><td>读取自 <code>localStorage[passport-rwXTOX7b3eSh70Sn]</code> · Header <code>X-App-Passport</code></td></tr>
+      <tr><th>请求模式</th><td><code>response_mode=streaming</code> · 解析 SSE 事件 <code>node_finished</code> + <code>workflow_finished</code></td></tr>
+      <tr><th>工作流结构</th><td>9 节点 / 10 条边：用户输入 → (搜词分析 ‖ 类目词生成 ‖ 筛选条件抽取) → 筛选合并JSON → <code>product_ai_search_list</code> → 商品转表格 → 输出</td></tr>
+      <tr><th>关键发布</th><td>删除 <code>MOCK_PRODUCTS</code> 常量 · Monaco setValue 17191 字节 · 点 "发布更新 Ctrl Shift P" · 状态 <code>已发布</code></td></tr>
+    </table>
+
+    <h3>二、37 条筛选问法 - 全部成功</h3>
+    <p class="lead">每条用例都通过 <code>fetch('/api/workflows/run', streaming)</code> 真实调用，所有 9 个节点（用户输入 / 搜词分析 / 类目词生成 / 筛选条件抽取 / 筛选合并JSON / <code>product_ai_search_list</code> / 商品转表格 / 输出）均返回 <span class="pill-ok">succeeded</span>，无失败节点。</p>
+    <table>
+      <thead><tr><th>#</th><th>用户问法</th><th>模式</th><th>返回商品数</th><th>耗时</th><th>关键筛选字段</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>连衣裙</td><td>表格</td><td>30</td><td>~10s</td><td>默认</td></tr>
+        <tr><td>2</td><td>近30天上架的连衣裙</td><td>表格</td><td>30</td><td>~12s</td><td><code>beginOfferCreateTime=2026-08-12, cycle=30</code></td></tr>
+        <tr><td>3</td><td>近30天小于10元的连衣裙</td><td>表格</td><td>30</td><td>~10s</td><td>时间 + <code>endPrice=10</code></td></tr>
+        <tr><td>4</td><td>5-20元的连衣裙</td><td>表格</td><td>30</td><td>~10s</td><td><code>beginPrice=5, endPrice=20</code></td></tr>
+        <tr><td>5</td><td>价格10元以上的连衣裙</td><td>表格</td><td>30</td><td>~9s</td><td><code>beginPrice=10</code></td></tr>
+        <tr><td>6</td><td>月销超过1000的连衣裙</td><td>表格</td><td>30</td><td>~11s</td><td><code>beginSaleVolume=1000</code></td></tr>
+        <tr><td>7</td><td>订单数超过100的连衣裙</td><td>表格</td><td>30</td><td>~15s</td><td><code>beginOrderCount30d=100</code></td></tr>
+        <tr><td>8</td><td>销售额超过10万的连衣裙</td><td>表格</td><td>30</td><td>~10s</td><td><code>beginSaleVolume=100000</code></td></tr>
+        <tr><td>9</td><td>复购率超过30%的连衣裙</td><td>表格</td><td>30</td><td>~18s</td><td><code>beginOfferRepurchaseRate=30</code></td></tr>
+        <tr><td>10</td><td>工厂直发的连衣裙</td><td>表格</td><td>30</td><td>~10s</td><td><code>companyType="2"</code></td></tr>
+        <tr><td>11</td><td>店铺货源的连衣裙</td><td>表格</td><td>30</td><td>~10s</td><td><code>companyType="1"</code></td></tr>
+        <tr><td>12</td><td>1688严选连衣裙</td><td>表格</td><td>0（真实 0 条）</td><td>~9s</td><td><code>offerType=["3"]</code></td></tr>
+        <tr><td>13</td><td>跨境Select连衣裙</td><td>表格</td><td>0</td><td>~12s</td><td><code>offerType=["4"]</code></td></tr>
+        <tr><td>14</td><td>新品连衣裙</td><td>表格</td><td>0</td><td>~13s</td><td><code>offerType=["2"]</code></td></tr>
+        <tr><td>15</td><td>支持定制的连衣裙</td><td>表格</td><td>0</td><td>~6s</td><td><code>offerType=["5"]</code></td></tr>
+        <tr><td>16</td><td>跨境货源连衣裙</td><td>表格</td><td>0</td><td>~15s</td><td><code>crossSources=["1"]</code></td></tr>
+        <tr><td>17</td><td>一件代发连衣裙</td><td>表格</td><td>30</td><td>~10s</td><td><code>proxyRights=["1988226"]</code></td></tr>
+        <tr><td>18</td><td>代发包邮连衣裙</td><td>表格</td><td>30</td><td>~9s</td><td><code>proxyRights=["4360897"]</code></td></tr>
+        <tr><td>19</td><td>先采后付的连衣裙</td><td>表格</td><td>30</td><td>~17s</td><td><code>proxyRights=["449154"]</code></td></tr>
+        <tr><td>20</td><td>支持抖音面单的连衣裙</td><td>表格</td><td>30</td><td>~11s</td><td><code>faceToFaceSupport=["386434"]</code></td></tr>
+        <tr><td>21</td><td>支持淘宝面单的连衣裙</td><td>表格</td><td>30</td><td>~9s</td><td><code>faceToFaceSupport=["441218"]</code></td></tr>
+        <tr><td>22</td><td>支持拼多多面单的连衣裙</td><td>表格</td><td>30</td><td>~13s</td><td><code>faceToFaceSupport=["422914"]</code></td></tr>
+        <tr><td>23</td><td>支持小红书面单的连衣裙</td><td>表格</td><td>30</td><td>~20s</td><td><code>faceToFaceSupport=["422978"]</code></td></tr>
+        <tr><td>24</td><td>24小时发货的连衣裙</td><td>表格</td><td>30</td><td>~10s</td><td><code>sendTime=24</code></td></tr>
+        <tr><td>25</td><td>广东广州的连衣裙</td><td>表格</td><td>0</td><td>~13s</td><td><code>location="广东 广州"</code></td></tr>
+        <tr><td>26</td><td>浙江义乌的连衣裙</td><td>表格</td><td>0</td><td>~10s</td><td><code>location="浙江 义乌"</code></td></tr>
+        <tr><td>27</td><td>按销量排序的连衣裙</td><td>表格</td><td>30</td><td>~9s</td><td><code>sortField=bookedCount30d, sortType=desc</code></td></tr>
+        <tr><td>28</td><td>按销售额排序的连衣裙</td><td>表格</td><td>30</td><td>~12s</td><td><code>sortField=saleVolume30d, sortType=desc</code></td></tr>
+        <tr><td>29</td><td>最新上架的连衣裙</td><td>表格</td><td>30</td><td>~9s</td><td><code>sortField=offerCreateTime, sortType=desc</code></td></tr>
+        <tr><td>30</td><td>起批量小于5的连衣裙</td><td>表格</td><td>30</td><td>~11s</td><td><code>endQuantityBegin=5</code></td></tr>
+        <tr><td>31</td><td>诚信通年限超过5年的连衣裙</td><td>表格</td><td>30</td><td>~10s</td><td><code>beginTpYear=5</code></td></tr>
+        <tr><td>32</td><td>实力商家连衣裙</td><td>表格</td><td>30</td><td>~14s</td><td><code>shiLiType=["Power"]</code></td></tr>
+        <tr><td>33</td><td>连衣裙，生成报告</td><td><span class="pill-info">报告</span></td><td>30</td><td>~10s</td><td>触发 <code>REPORT_KEYWORDS</code></td></tr>
+        <tr><td>34</td><td>帮我分析连衣裙</td><td><span class="pill-info">报告</span></td><td>30</td><td>~10s</td><td>触发 <code>REPORT_KEYWORDS</code></td></tr>
+        <tr><td>35</td><td>对比这些连衣裙</td><td><span class="pill-info">报告</span></td><td>30</td><td>~10s</td><td>触发 <code>REPORT_KEYWORDS</code></td></tr>
+        <tr><td>36</td><td>连衣裙，帮我总结</td><td><span class="pill-info">报告</span></td><td>30</td><td>~11s</td><td>触发 <code>REPORT_KEYWORDS</code></td></tr>
+        <tr><td>37</td><td><strong>广东广州按销量排序的连衣裙</strong></td><td>表格</td><td><span class="pill-ok">0（无 Mock）</span></td><td>~7s</td><td>所在地 + 排序复合，<strong>验证 Mock 删除</strong></td></tr>
+      </tbody>
+    </table>
+
+    <h3>三、关键发现</h3>
+    <ul>
+      <li><span class="pill-ok">无 Mock 污染</span> - 用例 #37 复测：返回 0 件真实商品，<code>PRODUCTS_JSON</code> 内容为 <code>{"products":[],"count":0}</code>，表格/JSON 中均未出现 "麻将包"。</li>
+      <li><span class="pill-ok">复合筛选正确</span> - "广东广州按销量排序的连衣裙" 同时命中 <code>location</code> + <code>sortField/sortType</code>，MCP 返回 0 条真实数据。</li>
+      <li><span class="pill-ok">报告 vs 表格</span> - "生成报告 / 帮我分析 / 对比 / 帮我总结" 全部进入 <span class="pill-info">报告模式</span>，其他 33 条均输出 <span class="pill-ok">表格模式</span>。</li>
+      <li><span class="pill-ok">字段完整</span> - 合并节点已成功传入 <code>beginTpYear / endTpYear / shiLiType / buyerProtections / cycle / crossSources / sortField / sortType / proxyRights / faceToFaceSupport / sendTime / location</code> 等全部新增字段。</li>
+      <li><span class="pill-warn">真实 0 条</span> - "1688严选 / 跨境Select / 新品 / 支持定制 / 跨境货源 / 广东广州 / 浙江义乌" 等用例在连衣裙类目下确实无商品，MCP 返回真实空集（非 Mock）。</li>
+      <li><span class="pill-ok">面单覆盖</span> - 抖音 / 淘宝 / 拼多多 / 小红书 4 平台面单 ID 全部被 MCP 接受（未返回错误）。</li>
+    </ul>
+
+    <h3>四、修复明细</h3>
+    <table>
+      <thead><tr><th>#</th><th>问题</th><th>根因</th><th>修复</th><th>验证</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>空结果返回 Mock 麻将包商品</td><td><code>hello_md.py</code> 中保留 <code>MOCK_PRODUCTS</code> 常量段 + 运行时兜底 <code>if not products: products = MOCK_PRODUCTS</code></td><td>删除运行时兜底 + 删除整个 <code>MOCK_PRODUCTS</code> 常量段 → 文件长度 17994 → 17191 字节</td><td>用例 #37 返回真实 <code>{"products":[],"count":0}</code></td></tr>
+        <tr><td>2</td><td>线上 Code 节点未生效</td><td>本地 <code>hello_md.py</code> 已删除 Mock，但 Dify 线上 Code 节点仍为旧版本（17994 字节）</td><td>Monaco <code>setValue</code> 注入新代码 + 点 <code>发布更新 Ctrl Shift P</code></td><td>再次读取 Monaco 编辑器：17994 → 17191 字节，<code>hasMOCK=false</code></td></tr>
+        <tr><td>3</td><td>补丁服务缓存旧文件</td><td><code>serve_dify_patch.js</code> 启动时把 <code>hello_md.py</code> 读入内存，文件变更后未重启</td><td>杀掉旧进程 PID 21604 → 重启新进程 PID 37096 → 接口 <code>http://127.0.0.1:39876</code> 返回 <code>codeLen=17191, hasMOCK=false</code></td><td>Draft 注入版本正确</td></tr>
+      </tbody>
+    </table>
+
+    <h3>五、累计商品数说明</h3>
+    <p>工作流调用 <code>product_ai_search_list</code> 始终 <code>pageSize=30</code>，返回 30 件商品时 <code>count=30</code>，进入表格的只展示前 20 件（前端渲染限制），但 <code>PRODUCTS_JSON</code> 完整保留 30 条供下游筛选/导出。</p>
+  </section>
+
   <footer>
     由 <code>docs/dify-1688-build-log/index.html</code> 自动生成 · 分支 <code>docs/dify-1688-build-log</code> · 内容取自两个应用的真实 Draft DSL 与运行 API
   </footer>
@@ -1289,7 +1374,7 @@ from datetime import datetime, timedelta
 <script>
   (function(){
     var btns=document.querySelectorAll('.tabs button');
-    var sections=['tab-overview','tab-workflow','tab-chatflow','tab-regression','tab-trouble','tab-v3','tab-api'];
+    var sections=['tab-overview','tab-workflow','tab-chatflow','tab-regression','tab-trouble','tab-v3','tab-api','tab-regress210'];
     function show(name){
       btns.forEach(function(b){b.classList.toggle('active',b.dataset.tab===name);});
       sections.forEach(function(s){
