@@ -131,7 +131,7 @@
     <button data-tab="chatflow" role="tab">店雷达1688 <span class="pill">3 节点</span></button>
     <button data-tab="regression" role="tab">端到端回归 <span class="pill">2 轮</span></button>
     <button data-tab="trouble" role="tab">故障与修复 <span class="pill">5 条</span></button>
-    <button data-tab="api" role="tab">接口字段参数 <span class="pill">22</span></button>
+    <button data-tab="v3" role="tab">v3 传参链路 <span class="pill">new</span></button><button data-tab="api" role="tab">接口字段参数 <span class="pill">22</span></button>
   </div>
 
   <!-- ====================== OVERVIEW ====================== -->
@@ -1128,6 +1128,159 @@ from datetime import datetime, timedelta
     </p>
   </section>
 
+  <!-- ====================== V3 PASSING ====================== -->
+  <section id="tab-v3" class="panel hidden">
+    <h2>v3 传参链路 - 用户 query 1688 MCP</h2>
+    <p class="lead">
+      V3 改造时间：2026-09-11 - 让筛选条件（价格 / 时间 / 销量 / 类型 / 物流 / 产地 / 排序）真正传到 1688 MCP。
+      相比 v2 只用正则抽取 query 字符串，v3 增加 1 个 LLM 节点 + 1 个 Code 节点，分类处理更准确。
+    </p>
+
+    <h3>一、节点结构图</h3>
+    <pre>[用户输入] sys.query
+    |
+    +--&gt; [搜词分析并生成JSON] LLM (1788515332121)  --&gt; aiKeyword
+    |
+    +--&gt; [类目词生成JSON] LLM                          --&gt; categoryIdList
+    |
+    +--&gt; [筛选条件抽取] LLM (NEW)                       --&gt; filter_text
+    |       |
+    |       |-- filter_price     (beginPrice / endPrice)
+    |       |-- filter_time      (begin/endOfferCreateTime / cycle)
+    |       |-- filter_sales     (订单 / 件数 / 销售额 / 复购率)
+    |       |-- filter_type      (companyType / offerType / newOffer / crossSources)
+    |       |-- filter_logistics (proxyRights / faceToFaceSupport / shopService / sendTime)
+    |       |-- filter_location  (location 省份 + 城市)
+    |       |-- filter_brand     (brand)
+    |       +-- filter_sort      (sortField / sortType)
+    |
+    +--&gt; [合并 &gt; req] Code (NEW, 替代原搜词转JSON)
+    |       输入: ai_text + filter_text + category_ids
+    |       输出: req + query + pageIndex + pageSize + cycle + sortField + sortType
+    |
+    +--&gt; [product_ai_search_list] MCP (1788835165239)
+    |       接收完整 req，按字段过滤 + 排序
+    |
+    +--&gt; [商品转表格 v2.10] Code (1788839166239)
+    |       11 列表格渲染（含 5 个 v2.10 新字段）
+    |
+    +--&gt; [输出] (1788520000030)
+            最终 Markdown 表格 / 报告</pre>
+
+    <h3>二、v2 vs v3 对比</h3>
+    <table class="kv">
+      <thead><tr><th>维度</th><th>v2（旧）</th><th>v3（新）</th></tr></thead>
+      <tbody>
+        <tr><td>新增节点</td><td>—</td><td>1 LLM + 1 Code</td></tr>
+        <tr><td>价格 / 时间抽取方式</td><td>正则从 query 字符串抠</td><td>LLM + 正则兜底</td></tr>
+        <tr><td>销量 / 类型 / 物流 / 产地 / 排序</td><td>❌ 未实现</td><td>✅ LLM 抽取</td></tr>
+        <tr><td>支持筛选维度</td><td>2（价格 + 时间）</td><td>8（价格 / 时间 / 销量 / 类型 / 物流 / 产地 / 品牌 / 排序）</td></tr>
+        <tr><td>MCP 实际接收的筛选字段</td><td>~5</td><td>~25</td></tr>
+        <tr><td>prompt 长度</td><td>—</td><td>~ 1.5KB（紧凑）</td></tr>
+      </tbody>
+    </table>
+
+    <h3>三、节点清单（新增 / 修改）</h3>
+    <table class="kv">
+      <thead><tr><th>节点</th><th>类型</th><th>状态</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td>搜词分析并生成JSON</td><td>LLM</td><td><span class="tag off">复用</span></td><td>保持不变，输出 aiKeyword</td></tr>
+        <tr><td>类目词生成JSON</td><td>LLM</td><td><span class="tag off">复用</span></td><td>保持不变，输出 categoryIdList</td></tr>
+        <tr><td><strong>筛选条件抽取</strong></td><td>LLM</td><td><span class="tag on">新增</span></td><td>1 个综合 LLM 抽取 8 类筛选条件</td></tr>
+        <tr><td><strong>合并 → req</strong></td><td>Code</td><td><span class="tag on">新增</span></td><td>Python3 合并节点，构造完整 req</td></tr>
+        <tr><td>搜词转JSON（旧）</td><td>Code</td><td><span class="tag fix">替代</span></td><td>功能并入合并节点</td></tr>
+        <tr><td>product_ai_search_list</td><td>MCP</td><td><span class="tag fix">改线</span></td><td>tool_parameters 接合并节点的 req</td></tr>
+        <tr><td>商品转表格</td><td>Code</td><td><span class="tag off">复用</span></td><td>v2.10 11 列已就绪</td></tr>
+      </tbody>
+    </table>
+
+    <h3>四、合并节点输入输出</h3>
+    <h4>输入</h4>
+    <table class="kv">
+      <thead><tr><th>变量</th><th>类型</th><th>来源</th></tr></thead>
+      <tbody>
+        <tr><td><code>ai_text</code></td><td>string</td><td>搜词分析并生成JSON.text</td></tr>
+        <tr><td><code>filter_text</code></td><td>string</td><td>筛选条件抽取.text NEW</td></tr>
+        <tr><td><code>category_ids</code></td><td>array[string]</td><td>类目词生成JSON.categoryIdList</td></tr>
+      </tbody>
+    </table>
+
+    <h4>输出</h4>
+    <table class="kv">
+      <thead><tr><th>变量</th><th>类型</th><th>用途</th></tr></thead>
+      <tbody>
+        <tr><td><code>req</code></td><td>object</td><td>完整 MCP 请求体</td></tr>
+        <tr><td><code>pageIndex</code></td><td>number</td><td>页码（默认 1）</td></tr>
+        <tr><td><code>pageSize</code></td><td>number</td><td>每页条数（默认 30）</td></tr>
+        <tr><td><code>query</code></td><td>object</td><td>req.query 子对象</td></tr>
+        <tr><td><code>cycle</code></td><td>number</td><td>统计周期（顶层字段，不在 query 内）</td></tr>
+        <tr><td><code>sortField</code></td><td>string</td><td>排序字段（顶层字段）</td></tr>
+        <tr><td><code>sortType</code></td><td>string</td><td>排序方向（顶层字段）</td></tr>
+        <tr><td><code>category_ids</code></td><td>array[string]</td><td>透传</td></tr>
+        <tr><td><code>jsonText</code></td><td>string</td><td>原始 ai 文本（调试用）</td></tr>
+      </tbody>
+    </table>
+
+    <h3>五、合并节点构造的完整 req 示例</h3>
+    <p>输入 query: "近 30 天 &lt; 10 元连衣裙"</p>
+    <pre>{
+  "pageIndex": 1,
+  "pageSize": 30,
+  "cycle": 30,
+  "sortField": null,
+  "sortType": null,
+  "query": {
+    "keyWord": "连衣裙",
+    "categoryIdList": ["1036894"],
+    "aiKeyword": {
+      "requiredKeywords": ["连衣裙"],
+      "expandedKeywords": ["长袖连衣裙", "秋季连衣裙"],
+      "expandedTokenGroups": [],
+      "modifiers": "气质、女生",
+      "brand": ""
+    },
+    "beginOfferCreateTime": "2026-08-12",
+    "endOfferCreateTime": "2026-09-11",
+    "beginPrice": null,
+    "endPrice": 10,
+    "beginBookedCount": null,
+    "endBookedCount": null,
+    ...
+  }
+}</pre>
+
+    <h3>六、1688 MCP 实际可用的筛选维度</h3>
+    <table class="kv">
+      <thead><tr><th>维度</th><th>MCP 字段</th><th>v3 已接</th></tr></thead>
+      <tbody>
+        <tr><td>价格</td><td>beginPrice / endPrice</td><td><span class="tag on">Y</span></td></tr>
+        <tr><td>上架时间</td><td>beginOfferCreateTime / endOfferCreateTime</td><td><span class="tag on">Y</span></td></tr>
+        <tr><td>统计周期</td><td>cycle</td><td><span class="tag on">Y</span></td></tr>
+        <tr><td>销量</td><td>begin/endBookedCount / SaleCount / SaleVolume</td><td><span class="tag on">Y</span></td></tr>
+        <tr><td>月订单</td><td>begin/endOrderCount30d</td><td><span class="tag on">Y</span></td></tr>
+        <tr><td>复购率</td><td>begin/endOfferRepurchaseRate</td><td><span class="tag on">Y</span></td></tr>
+        <tr><td>公司类型</td><td>companyType</td><td><span class="tag on">Y</span></td></tr>
+        <tr><td>商品标识</td><td>offerType / newOffer</td><td><span class="tag on">Y</span></td></tr>
+        <tr><td>跨境专供</td><td>crossSources</td><td><span class="tag on">Y</span></td></tr>
+        <tr><td>代发权益</td><td>proxyRights</td><td><span class="tag on">Y</span></td></tr>
+        <tr><td>面单</td><td>faceToFaceSupport</td><td><span class="tag on">Y</span></td></tr>
+        <tr><td>卖家服务</td><td>shopService</td><td><span class="tag on">Y</span></td></tr>
+        <tr><td>发货时效</td><td>sendTime</td><td><span class="tag on">Y</span></td></tr>
+        <tr><td>所在地</td><td>location</td><td><span class="tag on">Y</span></td></tr>
+        <tr><td>排序</td><td>sortField / sortType</td><td><span class="tag on">Y</span></td></tr>
+        <tr><td>起订量</td><td>begin/endStartQuantity</td><td><span class="tag off">—</span></td></tr>
+        <tr><td>诚信通年限</td><td>begin/endTpYear</td><td><span class="tag off">—</span></td></tr>
+        <tr><td>分类</td><td>offerSupplyType</td><td><span class="tag off">—</span></td></tr>
+        <tr><td>权益保障</td><td>buyerProtections</td><td><span class="tag off">—</span></td></tr>
+        <tr><td>卖家会员类型</td><td>shiLiType</td><td><span class="tag off">—</span></td></tr>
+      </tbody>
+    </table>
+
+    <p class="lead">
+      <strong>实施步骤</strong>: 详见 <code>workflow_v3_install_guide.md</code> - 在 Dify 编辑器里手动新增 2 个节点 + 改 1 条连线。
+    </p>
+  </section>
+
   <footer>
     由 <code>docs/dify-1688-build-log/index.html</code> 自动生成 · 分支 <code>docs/dify-1688-build-log</code> · 内容取自两个应用的真实 Draft DSL 与运行 API
   </footer>
@@ -1136,7 +1289,7 @@ from datetime import datetime, timedelta
 <script>
   (function(){
     var btns=document.querySelectorAll('.tabs button');
-    var sections=['tab-overview','tab-workflow','tab-chatflow','tab-regression','tab-trouble','tab-api'];
+    var sections=['tab-overview','tab-workflow','tab-chatflow','tab-regression','tab-trouble','tab-v3','tab-api'];
     function show(name){
       btns.forEach(function(b){b.classList.toggle('active',b.dataset.tab===name);});
       sections.forEach(function(s){
@@ -1151,6 +1304,7 @@ from datetime import datetime, timedelta
     if(sections.indexOf('tab-'+hash)>=0) show(hash); else show('overview');
   })();
 </script>
+<!-- V3.1 update 2026-09-11 18:30 (Asia/Shanghai): v3 传参链路改造，新增 1 个 LLM 节点（筛选条件抽取）+ 1 个 Code 节点（合并 → req），替代原搜词转JSON 节点的纯正则抽取。LLM #3 负责从用户 query 里抽取 价格 / 时间 / 销量 / 类型 / 物流 / 产地 / 排序 等 8 类筛选条件。合并节点把所有 LLM 输出合并成完整 req 传给 1688 MCP。 -->
 <!-- V2.10 update 2026-09-11 17:30 (Asia/Shanghai)：商品转表格节点升级为 11 列新版，新增 5 个字段渲染：总销量（总订单数/总件数）、代发权益枚举映射（1988226→一件代发 / 4360897→代发包邮 / 449154→先采后付）、面单支持枚举映射（441218→淘宝 / 386434→抖音 / 422914→拼多多 / 422978→小红书 / 386370→快手）、权益保障、TP 诚信通年限强化显示；保障/实力/代发/面单合并为 1 列；新增接口字段参数 Tab（22 类输入字段 + 输出字段）。 -->
 <!-- V2.9 update 2026-09-10 21:38 (Asia/Shanghai)：商品转表格节点升级为 10 列新版；下游 Workflow 1688选品库发布版 #91；工作流作为工具 1688selector 同步成功 synced=true；Chatflow 店雷达1688 已验证新版表格。 -->
 </body>
