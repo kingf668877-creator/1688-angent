@@ -1488,6 +1488,50 @@ from datetime import datetime, timedelta
       <li><strong>做不到</strong>：在表格中显示 "增速 +123%"、"潜力分 9.5" 这样的具体指标。</li>
       <li><strong>建议</strong>：潜力推荐 MVP 用现有字段做组合：<code>新店（TP年限 &lt; 2）+ 近30天上架 + cycle=7 + 按7日增长率排序 + 一件代发 + 工厂</code>。</li>
     </ul>
+
+    <h3>二十、v2.10.3 热补丁 - 去掉复购率 + 类目字段修复</h3>
+    <p class="lead">时间：<code>2026-09-12</code> · 反馈：<strong>去掉复购率 / 类目没有展示</strong> · 根因：MCP 不返回复购率 + 代码字段名不匹配</p>
+
+    <h3>二十一、修复明细</h3>
+    <table>
+      <thead><tr><th>问题</th><th>根因</th><th>修复</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>复购率列全部显示 <code>-</code></td>
+          <td><code>product_ai_search_list</code> MCP 实际不返回 <code>offerRepurchaseRate / repurchase_rate / buyerRate / positive_rate</code> 任一字段</td>
+          <td><strong>删除复购率列</strong>，表格从 11 列变 10 列</td>
+        </tr>
+        <tr>
+          <td>类目列显示 <code>-</code></td>
+          <td>代码读 <code>categoryName / category_name</code>，但 MCP 实际返回字段是 <code>levelName</code>（如 "女装>其他短外套"）</td>
+          <td>改为 <code>levelName → categoryName → category_name</code> 兜底链</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>二十二、MCP 商品对象实际 25 个字段</h3>
+    <p>通过 <code>丝绒连衣裙</code> 真实运行统计得出（<code>丝绒连衣裙</code> 30 条商品字段全相同）：</p>
+    <pre>offerId, shopId, image, offerCreateTime, quantityPrices, title,
+price, deliveryTime, company, saleQuantity, orderCount, salesVolume,
+province, city, tpYear, buyerProtections, consignPrice, shiLiType,
+unit, quantityBegin, levelName, companyType, shopUrl,
+bookedCount, saleCount</pre>
+    <p>任何前端代码里读到 <code>categoryName / offerRepurchaseRate / repurchase_rate / gmv30d / saleVolume30d</code> 等字段都会拿到 <code>null</code>，必须用兜底链或回填默认值。</p>
+
+    <h3>二十三、字段名映射速查表</h3>
+    <table>
+      <thead><tr><th>业务字段</th><th>代码原本期望</th><th>MCP 实际字段</th></tr></thead>
+      <tbody>
+        <tr><td>30天订单数</td><td><code>orderCount30d / bookedCount30d</code></td><td><code>orderCount</code></td></tr>
+        <tr><td>30天件数</td><td><code>saleVolume30d / saleCount30d</code></td><td><code>saleQuantity</code></td></tr>
+        <tr><td>30天销售额</td><td><code>gmv30d</code></td><td><code>salesVolume</code></td></tr>
+        <tr><td>总订单数</td><td><code>totalBookedCount</code></td><td><code>bookedCount</code></td></tr>
+        <tr><td>总件数</td><td><code>totalSaleCount</code></td><td><code>saleCount</code></td></tr>
+        <tr><td>商品类目</td><td><code>categoryName / category_name</code></td><td><code>levelName</code></td></tr>
+        <tr><td>诚信通年限</td><td><code>tpYear</code></td><td><code>tpYear</code>（一致）</td></tr>
+        <tr><td>复购率</td><td><code>offerRepurchaseRate</code></td><td><strong>不存在</strong></td></tr>
+      </tbody>
+    </table>
   </section>
 
   <footer>
