@@ -1364,6 +1364,47 @@ from datetime import datetime, timedelta
 
     <h3>五、累计商品数说明</h3>
     <p>工作流调用 <code>product_ai_search_list</code> 始终 <code>pageSize=30</code>，返回 30 件商品时 <code>count=30</code>，进入表格的只展示前 20 件（前端渲染限制），但 <code>PRODUCTS_JSON</code> 完整保留 30 条供下游筛选/导出。</p>
+
+    <h3>六、v2.10.1 热补丁 - LLM 思考文本 JSON 解析修复</h3>
+    <p class="lead">时间：<code>2026-09-12</code> · 触发用例：<strong>男士休闲外套</strong> → 0 件 → 修复后 30 件</p>
+
+    <h3>七、根因分析</h3>
+    <p>LLM 思考文本（<code><think>...{...}...</think></code>）中含多个 <code>{ }</code> 干扰字符。合并节点的 <code>parse()</code> 用 <code>s.find('{')</code> 取第一个 <code>{</code>、<code>s.rfind('}')</code> 取最后一个 <code>}</code>，结果在思考文本中间截断，<strong>拿不到真正输出的 JSON</strong>。</p>
+    <table class="kv">
+      <tr><th>问题字段</th><td>解析后 <code>ai = {}</code>（空字典）</td></tr>
+      <tr><th>连锁后果</th><td><code>requiredKeywords=[]</code> → <code>main_kw=""</code> → <code>keyWord=""</code> → MCP 无法匹配</td></tr>
+      <tr><th>触发条件</th><td>任何让 LLM 思考文本变长的 query（多义词、修饰词多、类目推断模糊），如"男士休闲外套"</td></tr>
+      <tr><th>修复策略</th><td>从右往左扫描 <code>}</code>，用括号配对深度匹配（考虑字符串/转义），尝试 <code>json.loads</code>；取最后一个能成功解析的 dict</td></tr>
+    </table>
+
+    <h3>八、修复对比</h3>
+    <table>
+      <thead><tr><th>指标</th><th>修复前</th><th>修复后</th></tr></thead>
+      <tbody>
+        <tr><td><code>parse(ai_text)</code></td><td>返回 <code>{}</code>（截断失败）</td><td>返回完整 JSON（6 keys）</td></tr>
+        <tr><td><code>requiredKeywords</code></td><td><code>[]</code></td><td><code>["外套","休闲","男士"]</code></td></tr>
+        <tr><td><code>keyWord</code></td><td><code>""</code></td><td><code>"外套"</code></td></tr>
+        <tr><td><code>expandedKeywords</code></td><td><code>[]</code></td><td><code>["男士休闲外套","男式休闲外套","男款休闲外套"]</code></td></tr>
+        <tr><td>男士休闲外套商品数</td><td><span class="pill-warn">0</span></td><td><span class="pill-ok">30（pc=20）</span></td></tr>
+        <tr><td>连衣裙商品数</td><td>20</td><td><span class="pill-ok">20（未回归）</span></td></tr>
+      </tbody>
+    </table>
+
+    <h3>九、修复代码</h3>
+    <p>合并节点 <code>merge_node_v3.py</code> 升级 <code>parse()</code>：</p>
+    <pre><span class="k">def parse(text):</span>
+    <span class="c"># LLM 思考文本里可能含多个 { } 描述或伪 JSON，必须找到</span>
+    <span class="c"># 最后一个能正确解析的完整 JSON 对象。从右往左找每个可能的 }</span>
+    <span class="c"># 位置，匹配到对应的 { 后尝试 json.loads。</span>
+    <span class="k">for</span> j <span class="k">in</span> <span class="s">positions_of</span>(s, <span class="s">'}'</span>):   <span class="c"># 从右往左</span>
+        i = <span class="s">matching_left_brace</span>(s, j)   <span class="c"># 括号配对深度匹配</span>
+        <span class="k">try</span>:
+            obj = json.loads(s[i:j+1])
+            <span class="k">if</span> <span class="s">isinstance</span>(obj, dict):
+                <span class="k">return</span> obj
+        <span class="k">except</span>:
+            <span class="k">continue</span>
+    <span class="k">return None</span></pre>
   </section>
 
   <footer>
