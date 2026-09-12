@@ -1449,6 +1449,45 @@ from datetime import datetime, timedelta
       <li><strong>上架时间</strong>：MCP 返回 <code>2025-07-07T01:08:00.000+08:00</code>（ISO 格式），表格里显示为 <code>2025-07-07T01:08</code>，可读性 OK。</li>
       <li><strong>总销量</strong>：修复前已兼容 <code>bookedCount / saleCount</code>，所以一直正常。</li>
     </ul>
+
+    <h3>十五、v2.11 调研 - MCP bookedCount7dGrowthRate 字段支持</h3>
+    <p class="lead">时间：<code>2026-09-12</code> · 目的：验证"潜力商品推荐"前置条件 · 方法：实际工作流请求对比</p>
+
+    <h3>十六、验证步骤</h3>
+    <ol>
+      <li>用同一关键词"连衣裙"，分别请求 <code>按销量排序的连衣裙</code> 和 <code>按7日增长率排序的连衣裙</code>。</li>
+      <li>提取 <code>PRODUCTS_JSON</code> 中的前 5 个商品标题。</li>
+      <li>对比两组排序的差异。</li>
+    </ol>
+
+    <h3>十七、验证结果</h3>
+    <table>
+      <thead><tr><th>排名</th><th>按销量排序（bookedCount30d）</th><th>按7日增长率排序（bookedCount7dGrowthRate）</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>跨境热销连衣裙纯色挂脖立体玫瑰花连衣裙</td><td>夏季新款连衣裙亚马逊碎花连衣裙法式甜美连衣裙</td></tr>
+        <tr><td>2</td><td>跨境热销连衣裙复古打褶收腰镂空花边连衣裙</td><td>夏季新款连衣裙轻职气质连衣裙 亚马逊碎花连衣裙</td></tr>
+        <tr><td>3</td><td>欧美热销连衣裙V 领花边无袖收腰镂空连衣裙</td><td>女士花卉长款连衣裙 - 优雅的V领连衣裙跨境印花</td></tr>
+        <tr><td>4</td><td>秋季跨境TK大码连衣裙波西米亚度假休闲连衣裙</td><td>碎花夏季粒粒仔连衣裙批发 甜美 短袖连衣裙</td></tr>
+        <tr><td>5</td><td>跨境热销连衣裙草莓图案印花女士连衣裙</td><td>跨境欧美夏季波西米亚风连衣裙飘逸碎花连衣裙</td></tr>
+        <tr><td><strong>前5重叠率</strong></td><td colspan="2"><strong>0/20</strong>（完全不同，证明 MCP 接受并执行了不同的 sortField）</td></tr>
+      </tbody>
+    </table>
+
+    <h3>十八、结论</h3>
+    <table class="kv">
+      <tr><th>sortField=bookedCount7dGrowthRate</th><td><span class="pill-ok">接受并执行</span>，排序生效</td></tr>
+      <tr><th>返回数据中 growth rate 字段</th><td><span class="pill-warn">无</span>，MCP 商品对象不含任何 <code>*GrowthRate</code> 字段</td></tr>
+      <tr><th>MCP 商品实际字段</th><td><code>offerId, shopId, image, offerCreateTime, quantityPrices, price, deliveryTime, company, saleQuantity, orderCount, salesVolume, province, city, tpYear, buyerProtections, consignPrice, shiLiType, unit, quantityBegin, levelName, companyType, shopUrl, bookedCount, saleCount</code>（24 个）</td></tr>
+      <tr><th>支持的筛选提示词</th><td>已有 <code>按7日增长率排序/增长最快 -> sortField="bookedCount7dGrowthRate", sortType="desc"</code>，无需修改</td></tr>
+    </table>
+
+    <h3>十九、对"潜力商品推荐"的影响</h3>
+    <p>由于 MCP 不返回增长率数值，"潜力"只能用相对排序体现（按7日增长率 desc 拿到"近期增速最快"的商品），无法在表格里展示具体增长率。这意味着：</p>
+    <ul>
+      <li><strong>可做</strong>：用户问"潜力商品"时，组合 <code>sortField=bookedCount7dGrowthRate desc</code> + <code>cycle=7</code> + <code>beginOfferCreateTime=近30天</code> 等条件，输出"近期增速快的新品"。</li>
+      <li><strong>做不到</strong>：在表格中显示 "增速 +123%"、"潜力分 9.5" 这样的具体指标。</li>
+      <li><strong>建议</strong>：潜力推荐 MVP 用现有字段做组合：<code>新店（TP年限 &lt; 2）+ 近30天上架 + cycle=7 + 按7日增长率排序 + 一件代发 + 工厂</code>。</li>
+    </ul>
   </section>
 
   <footer>
