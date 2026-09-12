@@ -1405,6 +1405,50 @@ from datetime import datetime, timedelta
         <span class="k">except</span>:
             <span class="k">continue</span>
     <span class="k">return None</span></pre>
+
+    <h3>十、v2.10.2 热补丁 - 商品表字段映射修复</h3>
+    <p class="lead">时间：<code>2026-09-12</code> · 反馈：<strong>"商品结果很多数据都是空的"</strong> · 根因：MCP 实际字段名与代码期望字段名不匹配</p>
+
+    <h3>十一、根因分析</h3>
+    <p>通过 <code>/console/api/.../workflow-runs/{runId}/node-executions</code> 拿到 <code>product_ai_search_list</code> 节点的 <code>outputs.json</code>，对比后发现：</p>
+    <table class="kv">
+      <tr><th>MCP 实际字段</th><td><code>orderCount / saleQuantity / salesVolume / bookedCount / saleCount</code></td></tr>
+      <tr><th>代码期望字段</th><td><code>orderCount30d / saleVolume30d / gmv30d / totalBookedCount / totalSaleCount</code></td></tr>
+      <tr><th>影响</th><td>"近30天数据"列全部为 <code>-</code>，第二行实际有 620 笔订单也展示不出来</td></tr>
+      <tr><th>未受影响</th><td>复购率（MCP 不返回该字段）、总销量（已有 bookedCount / saleCount 兼容）</td></tr>
+    </table>
+
+    <h3>十二、修复方法</h3>
+    <p><code>hello_md.py</code> 的 <code>first()</code> 备选字段列表追加 MCP 真实字段名：</p>
+    <pre><span class="k">order_30</span> = first(item.get(<span class="s">'orderCount30d'</span>),
+                item.get(<span class="s">'bookedCount30d'</span>),
+                item.get(<span class="s">'bookedCount_30d'</span>),
+                item.get(<span class="s">'orderCount'</span>))     <span class="c"># 新增</span>
+<span class="k">sale_30</span>  = first(item.get(<span class="s">'saleVolume30d'</span>),
+                item.get(<span class="s">'saleCount30d'</span>),
+                item.get(<span class="s">'saleVolume_30d'</span>),
+                item.get(<span class="s">'saleQuantity'</span>))    <span class="c"># 新增</span>
+<span class="k">gmv_30</span>   = first(item.get(<span class="s">'gmv30d'</span>),
+                item.get(<span class="s">'gmv_30d'</span>),
+                item.get(<span class="s">'salesVolume'</span>))       <span class="c"># 新增</span></pre>
+
+    <h3>十三、修复后对比</h3>
+    <table>
+      <thead><tr><th>商品</th><th>近30天数据（修复前）</th><th>近30天数据（修复后）</th></tr></thead>
+      <tbody>
+        <tr><td>第1行 双面摇粒绒</td><td><code>-</code></td><td><code>订单：0 笔<br>件数：0 件<br>销售额：¥0.0</code></td></tr>
+        <tr><td>第2行 双面摇粒绒（容城厂）</td><td><code>-</code></td><td><code>订单：5 笔<br>件数：14 件<br>销售额：¥672.0</code></td></tr>
+        <tr><td>第3行 立领棒球服</td><td><code>-</code></td><td><code>订单：0 笔<br>件数：0 件<br>销售额：¥0.0</code></td></tr>
+        <tr><td>第4行 假两件格子</td><td><code>-</code></td><td><code>订单：0 笔<br>件数：0 件<br>销售额：¥0.0</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3>十四、剩余空字段说明</h3>
+    <ul>
+      <li><strong>复购率</strong>：MCP 实际未返回 <code>offerRepurchaseRate / repurchase_rate / buyerRate / positive_rate</code> 任一字段。这是 MCP 数据源限制，无法修复。</li>
+      <li><strong>上架时间</strong>：MCP 返回 <code>2025-07-07T01:08:00.000+08:00</code>（ISO 格式），表格里显示为 <code>2025-07-07T01:08</code>，可读性 OK。</li>
+      <li><strong>总销量</strong>：修复前已兼容 <code>bookedCount / saleCount</code>，所以一直正常。</li>
+    </ul>
   </section>
 
   <footer>
