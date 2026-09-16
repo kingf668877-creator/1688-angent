@@ -781,27 +781,18 @@ from datetime import datetime, timedelta
           <td>原设计让 Chatflow 自行"提取关键词"再传下游。</td>
           <td>改为"单轮原文透传"，仅在上下文追问时合并条件。下游天然拿到完整 query。</td>
         </tr>
+        <tr>
+          <td><span class="pill-ok">0</span></td>
+          <td><span class="pill-warn">「100 条商品」只返回 50 条</span><br/>用户问"连衣裙的 100 条商品"，之前模型纠结多页/多调，思考链吃光 token，工具调用未发出，回复"停止响应"。</td>
+          <td>1688 MCP <code>product_ai_search_list</code> 单次上限 50 条/页；模型在 FunctionCalling 模式下反复纠结多页调度，CoT 占满 <code>max_tokens</code> 导致 tool_call JSON 截断或不发。</td>
+          <td>
+            <strong>第一版（已弃用）</strong>：在 1688 选品库 Workflow 内加「迭代节点」+ <code>plan_pages</code> + <code>merge_dedup</code>，期望工作流内循环调 MCP。失败原因：Dify 0.x 迭代容器内子节点访问迭代项的模板语法不兼容，<code>{{#iteration.pageIndex#}}</code> / <code>{{#iteration_item.pageIndex#}}</code> 都被原样传给 MCP，触发 <code>could not convert string to float</code>。<br/>
+            <strong>当前方案（已发布）</strong>：下游 Workflow 逻辑零改动、单次只调一次 MCP；Chatflow Agent 指令新增「多页召唤门禁」规则 15、16（1≤N≤100 时串行调用 pageIndex=1/2 各 50 条，去重拼接；N>100 截断提示上限）；模型换 <code>deepseek-v4-flash</code>，<code>max_tokens=4096</code>、<code>temperature=0.2</code>、删 <code>reasoning_effort</code>。实测「连衣裙的 100 条商品」→ 49s、3 步、46455 tokens、answer 10566 字符，含完整商品表格。<br/>
+            <strong>后续优化</strong>：等 Dify 0.x 迭代容器模板语法确认稳定后，再把分页逻辑搬回 Workflow（Agent 不背调度，可靠性更高）。
+          </td>
+        </tr>
       </tbody>
     </table>
-
-    <h3>100 条分页方案（最新）</h3>
-    <p class="lead">1688 MCP <code>product_ai_search_list</code> 单次上限 50 条/页。用户问 100 条时单次调用拿不全，改造方案：</p>
-    <ol>
-      <li><strong>第一版</strong>（已弃用）：在 1688 选品库 Workflow 内引入「迭代节点」+ <code>plan_pages</code> + <code>merge_dedup</code> 三个节点，让工作流内部循环调 MCP。
-        <br/>失败原因：Dify 0.x 迭代容器内子节点访问迭代项的模板语法不兼容（<code>{{#iteration.pageIndex#}}</code> / <code>{{#iteration_item.pageIndex#}}</code> 都被当成字符串原文传给 MCP，触发 <code>could not convert string to float</code> 错误）。</li>
-      <li><strong>当前方案</strong>（已发布并验证）：
-        <ol>
-          <li>保留下游 Workflow 单次只调一次 MCP，<code>pageSize=50, pageIndex=1</code>，逻辑零改动、零风险。</li>
-          <li>在 Chatflow Agent 指令追加「多页召唤门禁」规则 15、16：
-            <pre>15. 用户要求 N 条商品（1≤N≤100）时可以串行两次 1688选品库：第一次 pageSize=50 pageIndex=1，第二次 pageSize=50 pageIndex=2。两次返回后去重、拼接，输出 100 条。若 N>100 仅返回 100 条并提示上限。
-16. 用户要求 N≤1 条时仅调一次，pageSize=N pageIndex=1。</pre>
-          </li>
-          <li>模型参数：<code>deepseek-v4-flash</code>，<code>max_tokens=4096</code>，<code>temperature=0.2</code>，删除 <code>reasoning_effort</code>，避免长 CoT 把 <code>max_tokens</code> 耗尽导致 JSON 截断。</li>
-          <li>实测：输入「连衣裙的 100 条商品」→ 49s 跑完，3 步，总 token 46455，answer 10566 字符，包含完整商品表格。</li>
-        </ol>
-      </li>
-    </ol>
-    <p><strong>后续优化路径</strong>：等 Dify 0.x 迭代容器模板语法确认稳定后，再把分页逻辑搬回 Workflow（Agent 端不负责循环，可靠性更高）。</p>
 
     <h3>教训</h3>
     <ul>
