@@ -791,6 +791,16 @@ from datetime import datetime, timedelta
             <strong>后续优化</strong>：等 Dify 0.x 迭代容器模板语法确认稳定后，再把分页逻辑搬回 Workflow（Agent 不背调度，可靠性更高）。
           </td>
         </tr>
+        <tr>
+          <td><span class="pill-ok">+1</span></td>
+          <td><span class="pill-warn">工具调用前 deepseek 思考泄漏 + 跨境/热销等意图词被洗掉</span><br/>用户问"旗舰手机支架，跨境热销"，DeepSeek-v4-flash 在调工具前先生成「已深度思考」「Retry once」等元数据并被 Dify 当成 reply 输出；Agent 还倾向把"跨境""热销"这类原本应交给 1688 搜词分析层处理的意图词洗掉，导致 query 退化为"手机支架"，下游无法识别跨境场景。</td>
+          <td>deepseek-v4-flash 在 FunctionCalling 时仍会输出 CoT 字段；Agent 指令里没有「禁止工具前文本输出」和「跨境/热销/新款等意图词原样保留」两条约束。</td>
+          <td>指令加规则17、18：
+            <pre>17. 禁止在调用工具前输出任何思考、分析、补充说明、深度思考、停止响应、Retry once 等类似元数据。只发出 tool_call JSON。
+18. 跨境/热销/新款/爆款/赛道/货带/适合跨境销售 等意图词不能被洗掉，必须原样保留在 query 里，由 1688选品库 内部的搜词分析/类目过滤/offerType 来处理。</pre>
+            实测「旗舰手机支架，跨境热销」→ 73s、3 步、answer 8155 字符，包含「跨境」「热销」「手机支架」三个关键词都进入下游参数。
+          </td>
+        </tr>
       </tbody>
     </table>
 
