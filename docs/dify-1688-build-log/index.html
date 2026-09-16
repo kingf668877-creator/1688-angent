@@ -130,7 +130,7 @@
     <button data-tab="workflow" role="tab">1688选品库 <span class="pill">8 节点</span></button>
     <button data-tab="chatflow" role="tab">店雷达1688 <span class="pill">3 节点</span></button>
     <button data-tab="regression" role="tab">端到端回归 <span class="pill">2 轮</span></button>
-    <button data-tab="trouble" role="tab">故障与修复 <span class="pill">5 条</span></button>
+    <button data-tab="trouble" role="tab">故障与修复 <span class="pill">6 条</span></button>
     <button data-tab="v3" role="tab">v3 传参链路 <span class="pill">new</span></button><button data-tab="api" role="tab">接口字段参数 <span class="pill">22</span></button><button data-tab="regress210" role="tab">v2.10 全量筛选回归 <span class="pill">37 用例</span></button>
   </div>
 
@@ -751,6 +751,16 @@ from datetime import datetime, timedelta
         <tr><th>#</th><th>现象</th><th>原因</th><th>修复</th></tr>
       </thead>
       <tbody>
+        <tr>
+          <td>6</td>
+          <td><span class="pill-warn">Chatflow 里的工具不响应新版工作流</span><br/>1688 选品库 Workflow 已重新发布、编辑保存过，但 Chatflow 的 Agent 节点仍跑旧快照里的 `iteration_item.pageIndex` 模板，每次都报 `could not convert string to float`。在 Chatflow 里把"1688 选品库"工具删除再重新添加一次，立刻恢复。</td>
+          <td>Dify 在跨 Workflow 调用上走的是「节点级工具引用 + 外部 workflow 快照」机制：Agent 节点上的 <code>product_ai_search_list</code> 在添加时绑定的是被调 workflow 当时的 published 版本快照，<strong>不会自动随被调 workflow 重新发布而刷新</strong>。Dify UI 也不提供指定调用版本的入口，所以"删除再添加"是当前唯一稳定的刷新手段。</td>
+          <td>
+            <strong>立即缓解</strong>：在 Chatflow → Agent 节点 → 工具清单里找到 `product_ai_search_list` → 删除 → 再点添加 → 重新选 `1688 选品库` → 选 `product_ai_search_list`。<br/>
+            <strong>根因提醒</strong>：每次 1688 选品库 Workflow 修改并发布后，<strong>必须同步在 Chatflow 端重做一次"删除再添加"</strong>，否则引用快照仍指向旧版，工具行为停留在旧版本。<br/>
+            <strong>本次实测</strong>：1688 选品库单独运行 <code>eaa61bb6…</code> → succeeded、20.8s、9347 tokens；删除再添加后，Chatflow <code>639751a8…</code> → succeeded、40s、4653 tokens，麻将包跨境商品正确返回。
+          </td>
+        </tr>
         <tr>
           <td>5</td>
           <td><span class="pill-warn">上游 LLM Provider "Model is disabled"</span><br/>工具调用返回 <code>request failed: Model is disabled</code>。</td>
