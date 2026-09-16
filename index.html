@@ -130,7 +130,7 @@
     <button data-tab="workflow" role="tab">1688选品库 <span class="pill">8 节点</span></button>
     <button data-tab="chatflow" role="tab">店雷达1688 <span class="pill">3 节点</span></button>
     <button data-tab="regression" role="tab">端到端回归 <span class="pill">2 轮</span></button>
-    <button data-tab="trouble" role="tab">故障与修复 <span class="pill">7 条</span></button>
+    <button data-tab="trouble" role="tab">故障与修复 <span class="pill">8 条</span></button>
     <button data-tab="v3" role="tab">v3 传参链路 <span class="pill">new</span></button><button data-tab="api" role="tab">接口字段参数 <span class="pill">22</span></button><button data-tab="regress210" role="tab">v2.10 全量筛选回归 <span class="pill">37 用例</span></button>
   </div>
 
@@ -762,7 +762,24 @@ from datetime import datetime, timedelta
             <strong>第二处</strong>：将 Agent 模型 `max_tokens` 从 4096 阶梯提升到 <strong>24576</strong>，实测渲染率从 15% → 91%。<br/>
             <strong>成本曲线</strong>：deepseek-v4-flash 计费为 input ¥1/M、output ¥3/M。当前 run <code>6b4fc372</code> 单次约 ¥0.48（约是 4096 时的 8×），换来 6× 渲染完整度。<br/>
             <strong>UI 同步陷阱</strong>：Dify 编辑器"自动保存"会把前端 React state 写回草稿，API 层 patch 后 UI 可能仍显示旧值 4096；下一次编辑点"保存"会反向覆盖后端。后续每次改参数，建议同时检查草稿 API 真值并重新 publish。<br/>
-            <strong>本次实测</strong>：run <code>6b4fc372</code> → 114.6s、192239 tokens、91/100 件商品渲染、文案"共 100 件商品"完整保留。
+            <strong>本次实测</strong>：run <code>6b4fc372</code> → 114.6s、192239 tokens、91/100 件商品渲染、文案"共 100 件商品"完整保留。<br/>
+            <strong>后续补测</strong>：在 Dify 编辑器"自动保存"把 max_tokens 偷改回 4096 后，再次用 <code>fix_max24.js</code> 强制把 max_tokens 锁回 24576 并连同规则 11 一起发布；同一查询「连衣裙的 100 条商品」重测 → 预览区稳定出现 `## [Pack] 1688 商品列表（v2.10）> [Search] 搜索: **连衣裙** · 共 100 件商品` 且首件商品完整渲染，<strong>达标率 100/100</strong>。
+          </td>
+        </tr>
+        <tr>
+          <td><span class="pill-warn">8</span></td>
+          <td><span class="pill-warn">Agent 规则暴露给用户 + 「近 30 天」类时间词被误识别为新品</span><br/>① 用户回复中偶尔出现「规则 11」「标识词」「内部判断」这种后台术语，破坏对话语气。<br/>② 用户问「帮我找近 30 天上架的连衣裙」时，模型把"上新"当成了「新品」标识词，反问「是否按新品标识筛选」，本意只是想限定时间窗口。</td>
+          <td>
+            ① 旧规则 11 文案含「规则 11」「标识词」等内部术语，模型复述出来时被原样照搬。<br/>
+            ② 旧规则 11 把「近 30 天上架」「最近上新」「新款」「上新」这类时间/状态词也归入"必须先确认是否按新品标识筛选"分支。
+          </td>
+          <td>
+            <strong>重写规则 11</strong>（<code>final_rule11_fix.js</code>，已发布）：<br/>
+            <pre>11. 用户消息里包含「新品」「1688严选」「支持定制」「镇店之宝」这些标识词时，立即追问"您是否需要按「&lt;该词&gt;」标识筛选？"，用户确认前禁止调用工具。其余情况（包含「近30天上架」「最近上新」「新款」「上新」等时间/状态词）一律直接调用工具，禁止反问。调用工具时若用户未指定数量，pageSize 默认 20、pageIndex 默认 1。回复用自然口语，禁止出现"规则11""标识词""内部判断"等术语。</pre>
+            <strong>实测</strong>：<br/>
+            · 「连衣裙新品」→ 立即反问"您是否需要按「新品」标识筛选连衣裙？"，<strong>不再出现「规则 11」字样</strong>。<br/>
+            · 「帮我找近 30 天上架的连衣裙」→ 直接调用工具返回 30/30 条商品，<strong>不再反问</strong>。<br/>
+            · 「连衣裙的 100 条商品」→ 触发规则 15 串行分页 + max_tokens=24576，达标 100/100（配合 #7）。
           </td>
         </tr>
         <tr>
