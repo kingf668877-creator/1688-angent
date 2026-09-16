@@ -129,10 +129,9 @@
     <button class="active" data-tab="overview" role="tab">总览 <span class="pill">1</span></button>
     <button data-tab="workflow" role="tab">1688选品库 <span class="pill">8 节点</span></button>
     <button data-tab="chatflow" role="tab">店雷达1688 <span class="pill">3 节点</span></button>
-    <button data-tab="toy-report" role="tab">玩具报告 <span class="pill">进行中</span></button>
     <button data-tab="regression" role="tab">端到端回归 <span class="pill">2 轮</span></button>
-    <button data-tab="trouble" role="tab">故障与修复 <span class="pill">5 条</span></button>
-    <button data-tab="v3" role="tab">v3 传参链路 <span class="pill">new</span></button><button data-tab="api" role="tab">接口字段参数 <span class="pill">22</span></button>
+    <button data-tab="trouble" role="tab">故障与修复 <span class="pill">7 条</span></button>
+    <button data-tab="v3" role="tab">v3 传参链路 <span class="pill">new</span></button><button data-tab="api" role="tab">接口字段参数 <span class="pill">22</span></button><button data-tab="regress210" role="tab">v2.10 全量筛选回归 <span class="pill">37 用例</span></button>
   </div>
 
   <!-- ====================== OVERVIEW ====================== -->
@@ -194,70 +193,6 @@
         <tr><td>回答用户</td><td><span class="pill-ok">承担</span></td><td>—</td></tr>
       </tbody>
     </table>
-  </section>
-
-  <!-- ====================== TOY REPORT ====================== -->
-  <section id="tab-toy-report" class="panel hidden">
-    <h2>玩具选品报告：Dify 对话自动生成</h2>
-    <p class="lead">目标：用户在「店雷达1688」Chatflow 中说「帮我生成玩具报告」，Agent 调用已发布的玩具报告 Workflow，并把完整 Markdown 报告原样回复给客户。</p>
-
-    <div class="grid2">
-      <pre><span class="c">// 当前报告链路</span>
-用户输入
-  └─ Chatflow Agent 识别「生成玩具报告」
-       └─ 调用 Workflow：玩具选品报告生成器
-            └─ query：玩具品类关键词
-                 └─ Code：聚合玩具样本与 V8 指标
-                      └─ 输出：report_markdown
-                           └─ End：report
-                                └─ Agent 原样输出 Markdown
-
-<span class="c">// 目标工具契约</span>
-名称：玩具选品报告生成器
-调用名：toy_report
-入参：query（必填，玩具品类关键词）
-出参：report（String，Markdown 报告）</pre>
-      <pre><span class="c">// 报告内容</span>
-1. 品类总览与样本规模
-2. 价格、订单、销售额与复购指标
-3. 5 维选品评分卡
-4. 价格 × 复购矩阵
-5. 明日爆款 TOP 10
-6. 供应商与首批测款建议
-
-<span class="c">// 当前数据状态</span>
-已完成：53 款内置玩具样本与 V8 报告模板
-计划：扩展至约 400 款真实商品数据
-输出格式：Markdown，可直接展示给客户</pre>
-    </div>
-
-    <h3>已定位问题与解决方案</h3>
-    <table>
-      <thead><tr><th>问题</th><th>定位结果</th><th>解决方案 / 状态</th></tr></thead>
-      <tbody>
-        <tr><td>工具保存提示 Checklist 未解决</td><td>输出节点引用了无效变量</td><td>回溯节点配置，发现 Code 节点没有正确暴露输出变量</td></tr>
-        <tr><td>Code 节点显示 0 个输出</td><td>outputs 使用了错误的数据结构</td><td>改为声明 <code>report_markdown</code> 为 string 输出</td></tr>
-        <tr><td>代码节点无法执行</td><td>代码缺少 Dify 要求的 <code>main</code> 入口</td><td>补充 <code>main</code>，接收 <code>query</code> 并返回报告对象</td></tr>
-        <tr><td>query 参数概述为空</td><td>工具表单存在未填写项</td><td>已补填「玩具品类关键词，例如：益智玩具、积木、毛绒玩具」</td></tr>
-        <tr><td>API 调试返回 401</td><td>管理端认证使用 Authorization，登录会话为 HttpOnly</td><td>放弃直接伪造 token，优先通过 Dify UI 完成保存和发布</td></tr>
-      </tbody>
-    </table>
-
-    <h3>当前状态</h3>
-    <div class="kv">
-      <div>Workflow 创建与草稿</div><div><span class="pill-ok">已完成</span> <code>ea358060-1dc7-4fb7-9dab-cc35dfd0fb50</code></div>
-      <div>工具调用名</div><div><code>toy_report</code> 已填写；工具保存仍待修复输出节点后重新执行</div>
-      <div>Chatflow Agent 绑定</div><div><span class="pill-warn">待完成</span> 绑定到节点 <code>1788937887630</code></div>
-      <div>端到端测试</div><div><span class="pill-warn">待完成</span> 在 Dify 对话中输入「帮我生成玩具报告」并验证 Markdown 输出</div>
-    </div>
-
-    <h3>下一步执行顺序</h3>
-    <div class="flow">
-      <div class="node start"><span class="tag">FIX</span>修复 Code 输出</div>
-      <div class="node code"><span class="tag">PUBLISH</span>重新发布 Workflow</div>
-      <div class="node tool"><span class="tag">BIND</span>加入 Agent 工具</div>
-      <div class="node llm"><span class="tag">TEST</span>对话验证报告</div>
-    </div>
   </section>
 
   <!-- ====================== WORKFLOW ====================== -->
@@ -817,6 +752,30 @@ from datetime import datetime, timedelta
       </thead>
       <tbody>
         <tr>
+          <td>7</td>
+          <td><span class="pill-warn">「连衣裙 100 条」渲染率随 max_tokens 阶梯上升</span><br/>用户问"连衣裙的 100 条商品"，Chatflow Agent 输出的商品 markdown 表格条数从 15 涨到 91 条，但仍未达 100。实测：max_tokens=4096 → 15 条 / 60s / 61k tokens；8192 → 30 / 77s / 75k；16384 → 60 / 78s / 101k；24576 → 91 / 114s / 192k。</td>
+          <td>两条叠加：<br/>
+            <strong>① 规则 12 与规则 15 互斥</strong>：原指令「输出长度保护 #12：当工具返回的商品总数超过 40 件时，表格只渲染前 40 件商品」与「多页召唤门禁 #15：用户要求 N=100 时串行调两次 → 去重 → 输出 100 条」冲突。Agent reasoning 里明确纠结两秒后才采纳规则 15。<br/>
+            <strong>② 商品 markdown 字段密集</strong>：每件商品平均 470 字符（≈700 tokens），包含图链、标题、商品ID、店铺ID、批发/代发/起订、上架时间、30天订单/累计订单/累计件数、诚信通年限、所在地、公司类型、保障标签、类目、店铺链接等 15+ 个字段。100 件 ≈ 70k tokens 仅 output 表本身，加上 reasoning + 两次工具返回 input 必然突破 15-20 万 token 总消耗。</td>
+          <td>
+            <strong>第一处</strong>：删除 Agent 指令中的规则 12（输出长度保护整段），让规则 15（输出 100 条）成为唯一约束。<br/>
+            <strong>第二处</strong>：将 Agent 模型 `max_tokens` 从 4096 阶梯提升到 <strong>24576</strong>，实测渲染率从 15% → 91%。<br/>
+            <strong>成本曲线</strong>：deepseek-v4-flash 计费为 input ¥1/M、output ¥3/M。当前 run <code>6b4fc372</code> 单次约 ¥0.48（约是 4096 时的 8×），换来 6× 渲染完整度。<br/>
+            <strong>UI 同步陷阱</strong>：Dify 编辑器"自动保存"会把前端 React state 写回草稿，API 层 patch 后 UI 可能仍显示旧值 4096；下一次编辑点"保存"会反向覆盖后端。后续每次改参数，建议同时检查草稿 API 真值并重新 publish。<br/>
+            <strong>本次实测</strong>：run <code>6b4fc372</code> → 114.6s、192239 tokens、91/100 件商品渲染、文案"共 100 件商品"完整保留。
+          </td>
+        </tr>
+        <tr>
+          <td>6</td>
+          <td><span class="pill-warn">Chatflow 里的工具不响应新版工作流</span><br/>1688 选品库 Workflow 已重新发布、编辑保存过，但 Chatflow 的 Agent 节点仍跑旧快照里的 `iteration_item.pageIndex` 模板，每次都报 `could not convert string to float`。在 Chatflow 里把"1688 选品库"工具删除再重新添加一次，立刻恢复。</td>
+          <td>Dify 在跨 Workflow 调用上走的是「节点级工具引用 + 外部 workflow 快照」机制：Agent 节点上的 <code>product_ai_search_list</code> 在添加时绑定的是被调 workflow 当时的 published 版本快照，<strong>不会自动随被调 workflow 重新发布而刷新</strong>。Dify UI 也不提供指定调用版本的入口，所以"删除再添加"是当前唯一稳定的刷新手段。</td>
+          <td>
+            <strong>立即缓解</strong>：在 Chatflow → Agent 节点 → 工具清单里找到 `product_ai_search_list` → 删除 → 再点添加 → 重新选 `1688 选品库` → 选 `product_ai_search_list`。<br/>
+            <strong>根因提醒</strong>：每次 1688 选品库 Workflow 修改并发布后，<strong>必须同步在 Chatflow 端重做一次"删除再添加"</strong>，否则引用快照仍指向旧版，工具行为停留在旧版本。<br/>
+            <strong>本次实测</strong>：1688 选品库单独运行 <code>eaa61bb6…</code> → succeeded、20.8s、9347 tokens；删除再添加后，Chatflow <code>639751a8…</code> → succeeded、40s、4653 tokens，麻将包跨境商品正确返回。
+          </td>
+        </tr>
+        <tr>
           <td>5</td>
           <td><span class="pill-warn">上游 LLM Provider "Model is disabled"</span><br/>工具调用返回 <code>request failed: Model is disabled</code>。</td>
           <td>Dify 当前工作区某个 LLM Provider 临时禁用，与主 Chatflow 逻辑无关。</td>
@@ -846,6 +805,26 @@ from datetime import datetime, timedelta
           <td>原设计让 Chatflow 自行"提取关键词"再传下游。</td>
           <td>改为"单轮原文透传"，仅在上下文追问时合并条件。下游天然拿到完整 query。</td>
         </tr>
+        <tr>
+          <td><span class="pill-ok">0</span></td>
+          <td><span class="pill-warn">「100 条商品」只返回 50 条</span><br/>用户问"连衣裙的 100 条商品"，之前模型纠结多页/多调，思考链吃光 token，工具调用未发出，回复"停止响应"。</td>
+          <td>1688 MCP <code>product_ai_search_list</code> 单次上限 50 条/页；模型在 FunctionCalling 模式下反复纠结多页调度，CoT 占满 <code>max_tokens</code> 导致 tool_call JSON 截断或不发。</td>
+          <td>
+            <strong>第一版（已弃用）</strong>：在 1688 选品库 Workflow 内加「迭代节点」+ <code>plan_pages</code> + <code>merge_dedup</code>，期望工作流内循环调 MCP。失败原因：Dify 0.x 迭代容器内子节点访问迭代项的模板语法不兼容，<code>{{#iteration.pageIndex#}}</code> / <code>{{#iteration_item.pageIndex#}}</code> 都被原样传给 MCP，触发 <code>could not convert string to float</code>。<br/>
+            <strong>当前方案（已发布）</strong>：下游 Workflow 逻辑零改动、单次只调一次 MCP；Chatflow Agent 指令新增「多页召唤门禁」规则 15、16（1≤N≤100 时串行调用 pageIndex=1/2 各 50 条，去重拼接；N>100 截断提示上限）；模型换 <code>deepseek-v4-flash</code>，<code>max_tokens=4096</code>、<code>temperature=0.2</code>、删 <code>reasoning_effort</code>。实测「连衣裙的 100 条商品」→ 49s、3 步、46455 tokens、answer 10566 字符，含完整商品表格。<br/>
+            <strong>后续优化</strong>：等 Dify 0.x 迭代容器模板语法确认稳定后，再把分页逻辑搬回 Workflow（Agent 不背调度，可靠性更高）。
+          </td>
+        </tr>
+        <tr>
+          <td><span class="pill-ok">+1</span></td>
+          <td><span class="pill-warn">工具调用前 deepseek 思考泄漏 + 跨境/热销等意图词被洗掉</span><br/>用户问"旗舰手机支架，跨境热销"，DeepSeek-v4-flash 在调工具前先生成「已深度思考」「Retry once」等元数据并被 Dify 当成 reply 输出；Agent 还倾向把"跨境""热销"这类原本应交给 1688 搜词分析层处理的意图词洗掉，导致 query 退化为"手机支架"，下游无法识别跨境场景。</td>
+          <td>deepseek-v4-flash 在 FunctionCalling 时仍会输出 CoT 字段；Agent 指令里没有「禁止工具前文本输出」和「跨境/热销/新款等意图词原样保留」两条约束。</td>
+          <td>指令加规则17、18：
+            <pre>17. 禁止在调用工具前输出任何思考、分析、补充说明、深度思考、停止响应、Retry once 等类似元数据。只发出 tool_call JSON。
+18. 跨境/热销/新款/爆款/赛道/货带/适合跨境销售 等意图词不能被洗掉，必须原样保留在 query 里，由 1688选品库 内部的搜词分析/类目过滤/offerType 来处理。</pre>
+            实测「旗舰手机支架，跨境热销」→ 73s、3 步、answer 8155 字符，包含「跨境」「热销」「手机支架」三个关键词都进入下游参数。
+          </td>
+        </tr>
       </tbody>
     </table>
 
@@ -856,6 +835,9 @@ from datetime import datetime, timedelta
       <li>指令要给模型"禁止动作"，明确禁止项比罗列允许项更稳。</li>
       <li>渲染层（Markdown 表格里的图片）能力应作为链路验收证据之一。</li>
       <li>归档时把每个节点的 prompt / Code / 参数都原样保留下来，避免后续只能凭印象重建。</li>
+      <li>Agent 指令里同时存在上限（"≤40"）和下限（"=100"）类约束时，要明确哪个胜出；否则模型会在 reasoning 里消耗大量 token 做判断，挤占输出配额。</li>
+      <li>max_tokens 是 output 上限，不是 input 上限；想渲染 100 行长 markdown，必须把 max_tokens 调到接近完整内容所需 token（每件商品 ≈700 tokens × N + 工具返回 + reasoning）。</li>
+      <li>Dify 编辑器"自动保存"会写回前端 React state，API 层 patch 后 UI 可能仍显示旧值——每次改参数要二次确认草稿真值。</li>
     </ul>
 
     <h3>## V2.9 升级记录</h3>
@@ -1346,6 +1328,259 @@ from datetime import datetime, timedelta
     </p>
   </section>
 
+  <!-- ====================== V2.10 全量筛选回归 ====================== -->
+  <section id="tab-regress210" class="panel hidden">
+    <h2>v2.10 全量筛选回归 - 外部 Chrome + 真实 Web App</h2>
+    <p class="lead">时间：<code>2026-09-11</code> · 渠道：外部 Chrome (TRAE Chrome Extension) 登录 Dify · 应用：<code>rwXTOX7b3eSh70Sn</code> · 工作流：<code>1688选品库_v2</code> · 调用：<code>/api/workflows/run</code> 流式 · 总耗时：约 6 分钟 / 37 用例 · 结果：<span class="pill-ok">全部 HTTP 200</span><span class="pill-ok">9 节点 succeeded</span><span class="pill-info">无 Mock 污染</span></p>
+
+    <h3>一、回归环境与基线</h3>
+    <table class="kv">
+      <tr><th>验证浏览器</th><td>外部 Google Chrome（TRAE Chrome Extension 控制，<code>Chrome/152.0.0.0</code> · <code>webdriver=false</code>）</td></tr>
+      <tr><th>Dify 部署</th><td><code>http://192.168.1.149</code> · 工作流 ID <code>9eb8746e-1dc7-4070-b8f9-32ca54628751</code></td></tr>
+      <tr><th>应用访问点</th><td><code>/workflow/rwXTOX7b3eSh70Sn</code></td></tr>
+      <tr><th>Passport</th><td>读取自 <code>localStorage[passport-rwXTOX7b3eSh70Sn]</code> · Header <code>X-App-Passport</code></td></tr>
+      <tr><th>请求模式</th><td><code>response_mode=streaming</code> · 解析 SSE 事件 <code>node_finished</code> + <code>workflow_finished</code></td></tr>
+      <tr><th>工作流结构</th><td>9 节点 / 10 条边：用户输入 → (搜词分析 ‖ 类目词生成 ‖ 筛选条件抽取) → 筛选合并JSON → <code>product_ai_search_list</code> → 商品转表格 → 输出</td></tr>
+      <tr><th>关键发布</th><td>删除 <code>MOCK_PRODUCTS</code> 常量 · Monaco setValue 17191 字节 · 点 "发布更新 Ctrl Shift P" · 状态 <code>已发布</code></td></tr>
+    </table>
+
+    <h3>二、37 条筛选问法 - 全部成功</h3>
+    <p class="lead">每条用例都通过 <code>fetch('/api/workflows/run', streaming)</code> 真实调用，所有 9 个节点（用户输入 / 搜词分析 / 类目词生成 / 筛选条件抽取 / 筛选合并JSON / <code>product_ai_search_list</code> / 商品转表格 / 输出）均返回 <span class="pill-ok">succeeded</span>，无失败节点。</p>
+    <table>
+      <thead><tr><th>#</th><th>用户问法</th><th>模式</th><th>返回商品数</th><th>耗时</th><th>关键筛选字段</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>连衣裙</td><td>表格</td><td>30</td><td>~10s</td><td>默认</td></tr>
+        <tr><td>2</td><td>近30天上架的连衣裙</td><td>表格</td><td>30</td><td>~12s</td><td><code>beginOfferCreateTime=2026-08-12, cycle=30</code></td></tr>
+        <tr><td>3</td><td>近30天小于10元的连衣裙</td><td>表格</td><td>30</td><td>~10s</td><td>时间 + <code>endPrice=10</code></td></tr>
+        <tr><td>4</td><td>5-20元的连衣裙</td><td>表格</td><td>30</td><td>~10s</td><td><code>beginPrice=5, endPrice=20</code></td></tr>
+        <tr><td>5</td><td>价格10元以上的连衣裙</td><td>表格</td><td>30</td><td>~9s</td><td><code>beginPrice=10</code></td></tr>
+        <tr><td>6</td><td>月销超过1000的连衣裙</td><td>表格</td><td>30</td><td>~11s</td><td><code>beginSaleVolume=1000</code></td></tr>
+        <tr><td>7</td><td>订单数超过100的连衣裙</td><td>表格</td><td>30</td><td>~15s</td><td><code>beginOrderCount30d=100</code></td></tr>
+        <tr><td>8</td><td>销售额超过10万的连衣裙</td><td>表格</td><td>30</td><td>~10s</td><td><code>beginSaleVolume=100000</code></td></tr>
+        <tr><td>9</td><td>复购率超过30%的连衣裙</td><td>表格</td><td>30</td><td>~18s</td><td><code>beginOfferRepurchaseRate=30</code></td></tr>
+        <tr><td>10</td><td>工厂直发的连衣裙</td><td>表格</td><td>30</td><td>~10s</td><td><code>companyType="2"</code></td></tr>
+        <tr><td>11</td><td>店铺货源的连衣裙</td><td>表格</td><td>30</td><td>~10s</td><td><code>companyType="1"</code></td></tr>
+        <tr><td>12</td><td>1688严选连衣裙</td><td>表格</td><td>0（真实 0 条）</td><td>~9s</td><td><code>offerType=["3"]</code></td></tr>
+        <tr><td>13</td><td>跨境Select连衣裙</td><td>表格</td><td>0</td><td>~12s</td><td><code>offerType=["4"]</code></td></tr>
+        <tr><td>14</td><td>新品连衣裙</td><td>表格</td><td>0</td><td>~13s</td><td><code>offerType=["2"]</code></td></tr>
+        <tr><td>15</td><td>支持定制的连衣裙</td><td>表格</td><td>0</td><td>~6s</td><td><code>offerType=["5"]</code></td></tr>
+        <tr><td>16</td><td>跨境货源连衣裙</td><td>表格</td><td>0</td><td>~15s</td><td><code>crossSources=["1"]</code></td></tr>
+        <tr><td>17</td><td>一件代发连衣裙</td><td>表格</td><td>30</td><td>~10s</td><td><code>proxyRights=["1988226"]</code></td></tr>
+        <tr><td>18</td><td>代发包邮连衣裙</td><td>表格</td><td>30</td><td>~9s</td><td><code>proxyRights=["4360897"]</code></td></tr>
+        <tr><td>19</td><td>先采后付的连衣裙</td><td>表格</td><td>30</td><td>~17s</td><td><code>proxyRights=["449154"]</code></td></tr>
+        <tr><td>20</td><td>支持抖音面单的连衣裙</td><td>表格</td><td>30</td><td>~11s</td><td><code>faceToFaceSupport=["386434"]</code></td></tr>
+        <tr><td>21</td><td>支持淘宝面单的连衣裙</td><td>表格</td><td>30</td><td>~9s</td><td><code>faceToFaceSupport=["441218"]</code></td></tr>
+        <tr><td>22</td><td>支持拼多多面单的连衣裙</td><td>表格</td><td>30</td><td>~13s</td><td><code>faceToFaceSupport=["422914"]</code></td></tr>
+        <tr><td>23</td><td>支持小红书面单的连衣裙</td><td>表格</td><td>30</td><td>~20s</td><td><code>faceToFaceSupport=["422978"]</code></td></tr>
+        <tr><td>24</td><td>24小时发货的连衣裙</td><td>表格</td><td>30</td><td>~10s</td><td><code>sendTime=24</code></td></tr>
+        <tr><td>25</td><td>广东广州的连衣裙</td><td>表格</td><td>0</td><td>~13s</td><td><code>location="广东 广州"</code></td></tr>
+        <tr><td>26</td><td>浙江义乌的连衣裙</td><td>表格</td><td>0</td><td>~10s</td><td><code>location="浙江 义乌"</code></td></tr>
+        <tr><td>27</td><td>按销量排序的连衣裙</td><td>表格</td><td>30</td><td>~9s</td><td><code>sortField=bookedCount30d, sortType=desc</code></td></tr>
+        <tr><td>28</td><td>按销售额排序的连衣裙</td><td>表格</td><td>30</td><td>~12s</td><td><code>sortField=saleVolume30d, sortType=desc</code></td></tr>
+        <tr><td>29</td><td>最新上架的连衣裙</td><td>表格</td><td>30</td><td>~9s</td><td><code>sortField=offerCreateTime, sortType=desc</code></td></tr>
+        <tr><td>30</td><td>起批量小于5的连衣裙</td><td>表格</td><td>30</td><td>~11s</td><td><code>endQuantityBegin=5</code></td></tr>
+        <tr><td>31</td><td>诚信通年限超过5年的连衣裙</td><td>表格</td><td>30</td><td>~10s</td><td><code>beginTpYear=5</code></td></tr>
+        <tr><td>32</td><td>实力商家连衣裙</td><td>表格</td><td>30</td><td>~14s</td><td><code>shiLiType=["Power"]</code></td></tr>
+        <tr><td>33</td><td>连衣裙，生成报告</td><td><span class="pill-info">报告</span></td><td>30</td><td>~10s</td><td>触发 <code>REPORT_KEYWORDS</code></td></tr>
+        <tr><td>34</td><td>帮我分析连衣裙</td><td><span class="pill-info">报告</span></td><td>30</td><td>~10s</td><td>触发 <code>REPORT_KEYWORDS</code></td></tr>
+        <tr><td>35</td><td>对比这些连衣裙</td><td><span class="pill-info">报告</span></td><td>30</td><td>~10s</td><td>触发 <code>REPORT_KEYWORDS</code></td></tr>
+        <tr><td>36</td><td>连衣裙，帮我总结</td><td><span class="pill-info">报告</span></td><td>30</td><td>~11s</td><td>触发 <code>REPORT_KEYWORDS</code></td></tr>
+        <tr><td>37</td><td><strong>广东广州按销量排序的连衣裙</strong></td><td>表格</td><td><span class="pill-ok">0（无 Mock）</span></td><td>~7s</td><td>所在地 + 排序复合，<strong>验证 Mock 删除</strong></td></tr>
+      </tbody>
+    </table>
+
+    <h3>三、关键发现</h3>
+    <ul>
+      <li><span class="pill-ok">无 Mock 污染</span> - 用例 #37 复测：返回 0 件真实商品，<code>PRODUCTS_JSON</code> 内容为 <code>{"products":[],"count":0}</code>，表格/JSON 中均未出现 "麻将包"。</li>
+      <li><span class="pill-ok">复合筛选正确</span> - "广东广州按销量排序的连衣裙" 同时命中 <code>location</code> + <code>sortField/sortType</code>，MCP 返回 0 条真实数据。</li>
+      <li><span class="pill-ok">报告 vs 表格</span> - "生成报告 / 帮我分析 / 对比 / 帮我总结" 全部进入 <span class="pill-info">报告模式</span>，其他 33 条均输出 <span class="pill-ok">表格模式</span>。</li>
+      <li><span class="pill-ok">字段完整</span> - 合并节点已成功传入 <code>beginTpYear / endTpYear / shiLiType / buyerProtections / cycle / crossSources / sortField / sortType / proxyRights / faceToFaceSupport / sendTime / location</code> 等全部新增字段。</li>
+      <li><span class="pill-warn">真实 0 条</span> - "1688严选 / 跨境Select / 新品 / 支持定制 / 跨境货源 / 广东广州 / 浙江义乌" 等用例在连衣裙类目下确实无商品，MCP 返回真实空集（非 Mock）。</li>
+      <li><span class="pill-ok">面单覆盖</span> - 抖音 / 淘宝 / 拼多多 / 小红书 4 平台面单 ID 全部被 MCP 接受（未返回错误）。</li>
+    </ul>
+
+    <h3>四、修复明细</h3>
+    <table>
+      <thead><tr><th>#</th><th>问题</th><th>根因</th><th>修复</th><th>验证</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>空结果返回 Mock 麻将包商品</td><td><code>hello_md.py</code> 中保留 <code>MOCK_PRODUCTS</code> 常量段 + 运行时兜底 <code>if not products: products = MOCK_PRODUCTS</code></td><td>删除运行时兜底 + 删除整个 <code>MOCK_PRODUCTS</code> 常量段 → 文件长度 17994 → 17191 字节</td><td>用例 #37 返回真实 <code>{"products":[],"count":0}</code></td></tr>
+        <tr><td>2</td><td>线上 Code 节点未生效</td><td>本地 <code>hello_md.py</code> 已删除 Mock，但 Dify 线上 Code 节点仍为旧版本（17994 字节）</td><td>Monaco <code>setValue</code> 注入新代码 + 点 <code>发布更新 Ctrl Shift P</code></td><td>再次读取 Monaco 编辑器：17994 → 17191 字节，<code>hasMOCK=false</code></td></tr>
+        <tr><td>3</td><td>补丁服务缓存旧文件</td><td><code>serve_dify_patch.js</code> 启动时把 <code>hello_md.py</code> 读入内存，文件变更后未重启</td><td>杀掉旧进程 PID 21604 → 重启新进程 PID 37096 → 接口 <code>http://127.0.0.1:39876</code> 返回 <code>codeLen=17191, hasMOCK=false</code></td><td>Draft 注入版本正确</td></tr>
+      </tbody>
+    </table>
+
+    <h3>五、累计商品数说明</h3>
+    <p>工作流调用 <code>product_ai_search_list</code> 始终 <code>pageSize=30</code>，返回 30 件商品时 <code>count=30</code>，进入表格的只展示前 20 件（前端渲染限制），但 <code>PRODUCTS_JSON</code> 完整保留 30 条供下游筛选/导出。</p>
+
+    <h3>六、v2.10.1 热补丁 - LLM 思考文本 JSON 解析修复</h3>
+    <p class="lead">时间：<code>2026-09-12</code> · 触发用例：<strong>男士休闲外套</strong> → 0 件 → 修复后 30 件</p>
+
+    <h3>七、根因分析</h3>
+    <p>LLM 思考文本（<code><think>...{...}...</think></code>）中含多个 <code>{ }</code> 干扰字符。合并节点的 <code>parse()</code> 用 <code>s.find('{')</code> 取第一个 <code>{</code>、<code>s.rfind('}')</code> 取最后一个 <code>}</code>，结果在思考文本中间截断，<strong>拿不到真正输出的 JSON</strong>。</p>
+    <table class="kv">
+      <tr><th>问题字段</th><td>解析后 <code>ai = {}</code>（空字典）</td></tr>
+      <tr><th>连锁后果</th><td><code>requiredKeywords=[]</code> → <code>main_kw=""</code> → <code>keyWord=""</code> → MCP 无法匹配</td></tr>
+      <tr><th>触发条件</th><td>任何让 LLM 思考文本变长的 query（多义词、修饰词多、类目推断模糊），如"男士休闲外套"</td></tr>
+      <tr><th>修复策略</th><td>从右往左扫描 <code>}</code>，用括号配对深度匹配（考虑字符串/转义），尝试 <code>json.loads</code>；取最后一个能成功解析的 dict</td></tr>
+    </table>
+
+    <h3>八、修复对比</h3>
+    <table>
+      <thead><tr><th>指标</th><th>修复前</th><th>修复后</th></tr></thead>
+      <tbody>
+        <tr><td><code>parse(ai_text)</code></td><td>返回 <code>{}</code>（截断失败）</td><td>返回完整 JSON（6 keys）</td></tr>
+        <tr><td><code>requiredKeywords</code></td><td><code>[]</code></td><td><code>["外套","休闲","男士"]</code></td></tr>
+        <tr><td><code>keyWord</code></td><td><code>""</code></td><td><code>"外套"</code></td></tr>
+        <tr><td><code>expandedKeywords</code></td><td><code>[]</code></td><td><code>["男士休闲外套","男式休闲外套","男款休闲外套"]</code></td></tr>
+        <tr><td>男士休闲外套商品数</td><td><span class="pill-warn">0</span></td><td><span class="pill-ok">30（pc=20）</span></td></tr>
+        <tr><td>连衣裙商品数</td><td>20</td><td><span class="pill-ok">20（未回归）</span></td></tr>
+      </tbody>
+    </table>
+
+    <h3>九、修复代码</h3>
+    <p>合并节点 <code>merge_node_v3.py</code> 升级 <code>parse()</code>：</p>
+    <pre><span class="k">def parse(text):</span>
+    <span class="c"># LLM 思考文本里可能含多个 { } 描述或伪 JSON，必须找到</span>
+    <span class="c"># 最后一个能正确解析的完整 JSON 对象。从右往左找每个可能的 }</span>
+    <span class="c"># 位置，匹配到对应的 { 后尝试 json.loads。</span>
+    <span class="k">for</span> j <span class="k">in</span> <span class="s">positions_of</span>(s, <span class="s">'}'</span>):   <span class="c"># 从右往左</span>
+        i = <span class="s">matching_left_brace</span>(s, j)   <span class="c"># 括号配对深度匹配</span>
+        <span class="k">try</span>:
+            obj = json.loads(s[i:j+1])
+            <span class="k">if</span> <span class="s">isinstance</span>(obj, dict):
+                <span class="k">return</span> obj
+        <span class="k">except</span>:
+            <span class="k">continue</span>
+    <span class="k">return None</span></pre>
+
+    <h3>十、v2.10.2 热补丁 - 商品表字段映射修复</h3>
+    <p class="lead">时间：<code>2026-09-12</code> · 反馈：<strong>"商品结果很多数据都是空的"</strong> · 根因：MCP 实际字段名与代码期望字段名不匹配</p>
+
+    <h3>十一、根因分析</h3>
+    <p>通过 <code>/console/api/.../workflow-runs/{runId}/node-executions</code> 拿到 <code>product_ai_search_list</code> 节点的 <code>outputs.json</code>，对比后发现：</p>
+    <table class="kv">
+      <tr><th>MCP 实际字段</th><td><code>orderCount / saleQuantity / salesVolume / bookedCount / saleCount</code></td></tr>
+      <tr><th>代码期望字段</th><td><code>orderCount30d / saleVolume30d / gmv30d / totalBookedCount / totalSaleCount</code></td></tr>
+      <tr><th>影响</th><td>"近30天数据"列全部为 <code>-</code>，第二行实际有 620 笔订单也展示不出来</td></tr>
+      <tr><th>未受影响</th><td>复购率（MCP 不返回该字段）、总销量（已有 bookedCount / saleCount 兼容）</td></tr>
+    </table>
+
+    <h3>十二、修复方法</h3>
+    <p><code>hello_md.py</code> 的 <code>first()</code> 备选字段列表追加 MCP 真实字段名：</p>
+    <pre><span class="k">order_30</span> = first(item.get(<span class="s">'orderCount30d'</span>),
+                item.get(<span class="s">'bookedCount30d'</span>),
+                item.get(<span class="s">'bookedCount_30d'</span>),
+                item.get(<span class="s">'orderCount'</span>))     <span class="c"># 新增</span>
+<span class="k">sale_30</span>  = first(item.get(<span class="s">'saleVolume30d'</span>),
+                item.get(<span class="s">'saleCount30d'</span>),
+                item.get(<span class="s">'saleVolume_30d'</span>),
+                item.get(<span class="s">'saleQuantity'</span>))    <span class="c"># 新增</span>
+<span class="k">gmv_30</span>   = first(item.get(<span class="s">'gmv30d'</span>),
+                item.get(<span class="s">'gmv_30d'</span>),
+                item.get(<span class="s">'salesVolume'</span>))       <span class="c"># 新增</span></pre>
+
+    <h3>十三、修复后对比</h3>
+    <table>
+      <thead><tr><th>商品</th><th>近30天数据（修复前）</th><th>近30天数据（修复后）</th></tr></thead>
+      <tbody>
+        <tr><td>第1行 双面摇粒绒</td><td><code>-</code></td><td><code>订单：0 笔<br>件数：0 件<br>销售额：¥0.0</code></td></tr>
+        <tr><td>第2行 双面摇粒绒（容城厂）</td><td><code>-</code></td><td><code>订单：5 笔<br>件数：14 件<br>销售额：¥672.0</code></td></tr>
+        <tr><td>第3行 立领棒球服</td><td><code>-</code></td><td><code>订单：0 笔<br>件数：0 件<br>销售额：¥0.0</code></td></tr>
+        <tr><td>第4行 假两件格子</td><td><code>-</code></td><td><code>订单：0 笔<br>件数：0 件<br>销售额：¥0.0</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3>十四、剩余空字段说明</h3>
+    <ul>
+      <li><strong>复购率</strong>：MCP 实际未返回 <code>offerRepurchaseRate / repurchase_rate / buyerRate / positive_rate</code> 任一字段。这是 MCP 数据源限制，无法修复。</li>
+      <li><strong>上架时间</strong>：MCP 返回 <code>2025-07-07T01:08:00.000+08:00</code>（ISO 格式），表格里显示为 <code>2025-07-07T01:08</code>，可读性 OK。</li>
+      <li><strong>总销量</strong>：修复前已兼容 <code>bookedCount / saleCount</code>，所以一直正常。</li>
+    </ul>
+
+    <h3>十五、v2.11 调研 - MCP bookedCount7dGrowthRate 字段支持</h3>
+    <p class="lead">时间：<code>2026-09-12</code> · 目的：验证"潜力商品推荐"前置条件 · 方法：实际工作流请求对比</p>
+
+    <h3>十六、验证步骤</h3>
+    <ol>
+      <li>用同一关键词"连衣裙"，分别请求 <code>按销量排序的连衣裙</code> 和 <code>按7日增长率排序的连衣裙</code>。</li>
+      <li>提取 <code>PRODUCTS_JSON</code> 中的前 5 个商品标题。</li>
+      <li>对比两组排序的差异。</li>
+    </ol>
+
+    <h3>十七、验证结果</h3>
+    <table>
+      <thead><tr><th>排名</th><th>按销量排序（bookedCount30d）</th><th>按7日增长率排序（bookedCount7dGrowthRate）</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>跨境热销连衣裙纯色挂脖立体玫瑰花连衣裙</td><td>夏季新款连衣裙亚马逊碎花连衣裙法式甜美连衣裙</td></tr>
+        <tr><td>2</td><td>跨境热销连衣裙复古打褶收腰镂空花边连衣裙</td><td>夏季新款连衣裙轻职气质连衣裙 亚马逊碎花连衣裙</td></tr>
+        <tr><td>3</td><td>欧美热销连衣裙V 领花边无袖收腰镂空连衣裙</td><td>女士花卉长款连衣裙 - 优雅的V领连衣裙跨境印花</td></tr>
+        <tr><td>4</td><td>秋季跨境TK大码连衣裙波西米亚度假休闲连衣裙</td><td>碎花夏季粒粒仔连衣裙批发 甜美 短袖连衣裙</td></tr>
+        <tr><td>5</td><td>跨境热销连衣裙草莓图案印花女士连衣裙</td><td>跨境欧美夏季波西米亚风连衣裙飘逸碎花连衣裙</td></tr>
+        <tr><td><strong>前5重叠率</strong></td><td colspan="2"><strong>0/20</strong>（完全不同，证明 MCP 接受并执行了不同的 sortField）</td></tr>
+      </tbody>
+    </table>
+
+    <h3>十八、结论</h3>
+    <table class="kv">
+      <tr><th>sortField=bookedCount7dGrowthRate</th><td><span class="pill-ok">接受并执行</span>，排序生效</td></tr>
+      <tr><th>返回数据中 growth rate 字段</th><td><span class="pill-warn">无</span>，MCP 商品对象不含任何 <code>*GrowthRate</code> 字段</td></tr>
+      <tr><th>MCP 商品实际字段</th><td><code>offerId, shopId, image, offerCreateTime, quantityPrices, price, deliveryTime, company, saleQuantity, orderCount, salesVolume, province, city, tpYear, buyerProtections, consignPrice, shiLiType, unit, quantityBegin, levelName, companyType, shopUrl, bookedCount, saleCount</code>（24 个）</td></tr>
+      <tr><th>支持的筛选提示词</th><td>已有 <code>按7日增长率排序/增长最快 -> sortField="bookedCount7dGrowthRate", sortType="desc"</code>，无需修改</td></tr>
+    </table>
+
+    <h3>十九、对"潜力商品推荐"的影响</h3>
+    <p>由于 MCP 不返回增长率数值，"潜力"只能用相对排序体现（按7日增长率 desc 拿到"近期增速最快"的商品），无法在表格里展示具体增长率。这意味着：</p>
+    <ul>
+      <li><strong>可做</strong>：用户问"潜力商品"时，组合 <code>sortField=bookedCount7dGrowthRate desc</code> + <code>cycle=7</code> + <code>beginOfferCreateTime=近30天</code> 等条件，输出"近期增速快的新品"。</li>
+      <li><strong>做不到</strong>：在表格中显示 "增速 +123%"、"潜力分 9.5" 这样的具体指标。</li>
+      <li><strong>建议</strong>：潜力推荐 MVP 用现有字段做组合：<code>新店（TP年限 &lt; 2）+ 近30天上架 + cycle=7 + 按7日增长率排序 + 一件代发 + 工厂</code>。</li>
+    </ul>
+
+    <h3>二十、v2.10.3 热补丁 - 去掉复购率 + 类目字段修复</h3>
+    <p class="lead">时间：<code>2026-09-12</code> · 反馈：<strong>去掉复购率 / 类目没有展示</strong> · 根因：MCP 不返回复购率 + 代码字段名不匹配</p>
+
+    <h3>二十一、修复明细</h3>
+    <table>
+      <thead><tr><th>问题</th><th>根因</th><th>修复</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>复购率列全部显示 <code>-</code></td>
+          <td><code>product_ai_search_list</code> MCP 实际不返回 <code>offerRepurchaseRate / repurchase_rate / buyerRate / positive_rate</code> 任一字段</td>
+          <td><strong>删除复购率列</strong>，表格从 11 列变 10 列</td>
+        </tr>
+        <tr>
+          <td>类目列显示 <code>-</code></td>
+          <td>代码读 <code>categoryName / category_name</code>，但 MCP 实际返回字段是 <code>levelName</code>（如 "女装>其他短外套"）</td>
+          <td>改为 <code>levelName → categoryName → category_name</code> 兜底链</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>二十二、MCP 商品对象实际 25 个字段</h3>
+    <p>通过 <code>丝绒连衣裙</code> 真实运行统计得出（<code>丝绒连衣裙</code> 30 条商品字段全相同）：</p>
+    <pre>offerId, shopId, image, offerCreateTime, quantityPrices, title,
+price, deliveryTime, company, saleQuantity, orderCount, salesVolume,
+province, city, tpYear, buyerProtections, consignPrice, shiLiType,
+unit, quantityBegin, levelName, companyType, shopUrl,
+bookedCount, saleCount</pre>
+    <p>任何前端代码里读到 <code>categoryName / offerRepurchaseRate / repurchase_rate / gmv30d / saleVolume30d</code> 等字段都会拿到 <code>null</code>，必须用兜底链或回填默认值。</p>
+
+    <h3>二十三、字段名映射速查表</h3>
+    <table>
+      <thead><tr><th>业务字段</th><th>代码原本期望</th><th>MCP 实际字段</th></tr></thead>
+      <tbody>
+        <tr><td>30天订单数</td><td><code>orderCount30d / bookedCount30d</code></td><td><code>orderCount</code></td></tr>
+        <tr><td>30天件数</td><td><code>saleVolume30d / saleCount30d</code></td><td><code>saleQuantity</code></td></tr>
+        <tr><td>30天销售额</td><td><code>gmv30d</code></td><td><code>salesVolume</code></td></tr>
+        <tr><td>总订单数</td><td><code>totalBookedCount</code></td><td><code>bookedCount</code></td></tr>
+        <tr><td>总件数</td><td><code>totalSaleCount</code></td><td><code>saleCount</code></td></tr>
+        <tr><td>商品类目</td><td><code>categoryName / category_name</code></td><td><code>levelName</code></td></tr>
+        <tr><td>诚信通年限</td><td><code>tpYear</code></td><td><code>tpYear</code>（一致）</td></tr>
+        <tr><td>复购率</td><td><code>offerRepurchaseRate</code></td><td><strong>不存在</strong></td></tr>
+      </tbody>
+    </table>
+  </section>
+
   <footer>
     由 <code>docs/dify-1688-build-log/index.html</code> 自动生成 · 分支 <code>docs/dify-1688-build-log</code> · 内容取自两个应用的真实 Draft DSL 与运行 API
   </footer>
@@ -1354,7 +1589,7 @@ from datetime import datetime, timedelta
 <script>
   (function(){
     var btns=document.querySelectorAll('.tabs button');
-    var sections=['tab-overview','tab-workflow','tab-chatflow','tab-toy-report','tab-regression','tab-trouble','tab-v3','tab-api'];
+    var sections=['tab-overview','tab-workflow','tab-chatflow','tab-regression','tab-trouble','tab-v3','tab-api','tab-regress210'];
     function show(name){
       btns.forEach(function(b){b.classList.toggle('active',b.dataset.tab===name);});
       sections.forEach(function(s){
