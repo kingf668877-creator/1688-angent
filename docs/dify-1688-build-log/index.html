@@ -130,7 +130,7 @@
     <button data-tab="workflow" role="tab">1688选品库 <span class="pill">8 节点</span></button>
     <button data-tab="chatflow" role="tab">店雷达1688 <span class="pill">3 节点</span></button>
     <button data-tab="regression" role="tab">端到端回归 <span class="pill">2 轮</span></button>
-    <button data-tab="trouble" role="tab">故障与修复 <span class="pill">6 条</span></button>
+    <button data-tab="trouble" role="tab">故障与修复 <span class="pill">7 条</span></button>
     <button data-tab="v3" role="tab">v3 传参链路 <span class="pill">new</span></button><button data-tab="api" role="tab">接口字段参数 <span class="pill">22</span></button><button data-tab="regress210" role="tab">v2.10 全量筛选回归 <span class="pill">37 用例</span></button>
   </div>
 
@@ -752,6 +752,20 @@ from datetime import datetime, timedelta
       </thead>
       <tbody>
         <tr>
+          <td>7</td>
+          <td><span class="pill-warn">「连衣裙 100 条」渲染率随 max_tokens 阶梯上升</span><br/>用户问"连衣裙的 100 条商品"，Chatflow Agent 输出的商品 markdown 表格条数从 15 涨到 91 条，但仍未达 100。实测：max_tokens=4096 → 15 条 / 60s / 61k tokens；8192 → 30 / 77s / 75k；16384 → 60 / 78s / 101k；24576 → 91 / 114s / 192k。</td>
+          <td>两条叠加：<br/>
+            <strong>① 规则 12 与规则 15 互斥</strong>：原指令「输出长度保护 #12：当工具返回的商品总数超过 40 件时，表格只渲染前 40 件商品」与「多页召唤门禁 #15：用户要求 N=100 时串行调两次 → 去重 → 输出 100 条」冲突。Agent reasoning 里明确纠结两秒后才采纳规则 15。<br/>
+            <strong>② 商品 markdown 字段密集</strong>：每件商品平均 470 字符（≈700 tokens），包含图链、标题、商品ID、店铺ID、批发/代发/起订、上架时间、30天订单/累计订单/累计件数、诚信通年限、所在地、公司类型、保障标签、类目、店铺链接等 15+ 个字段。100 件 ≈ 70k tokens 仅 output 表本身，加上 reasoning + 两次工具返回 input 必然突破 15-20 万 token 总消耗。</td>
+          <td>
+            <strong>第一处</strong>：删除 Agent 指令中的规则 12（输出长度保护整段），让规则 15（输出 100 条）成为唯一约束。<br/>
+            <strong>第二处</strong>：将 Agent 模型 `max_tokens` 从 4096 阶梯提升到 <strong>24576</strong>，实测渲染率从 15% → 91%。<br/>
+            <strong>成本曲线</strong>：deepseek-v4-flash 计费为 input ¥1/M、output ¥3/M。当前 run <code>6b4fc372</code> 单次约 ¥0.48（约是 4096 时的 8×），换来 6× 渲染完整度。<br/>
+            <strong>UI 同步陷阱</strong>：Dify 编辑器"自动保存"会把前端 React state 写回草稿，API 层 patch 后 UI 可能仍显示旧值 4096；下一次编辑点"保存"会反向覆盖后端。后续每次改参数，建议同时检查草稿 API 真值并重新 publish。<br/>
+            <strong>本次实测</strong>：run <code>6b4fc372</code> → 114.6s、192239 tokens、91/100 件商品渲染、文案"共 100 件商品"完整保留。
+          </td>
+        </tr>
+        <tr>
           <td>6</td>
           <td><span class="pill-warn">Chatflow 里的工具不响应新版工作流</span><br/>1688 选品库 Workflow 已重新发布、编辑保存过，但 Chatflow 的 Agent 节点仍跑旧快照里的 `iteration_item.pageIndex` 模板，每次都报 `could not convert string to float`。在 Chatflow 里把"1688 选品库"工具删除再重新添加一次，立刻恢复。</td>
           <td>Dify 在跨 Workflow 调用上走的是「节点级工具引用 + 外部 workflow 快照」机制：Agent 节点上的 <code>product_ai_search_list</code> 在添加时绑定的是被调 workflow 当时的 published 版本快照，<strong>不会自动随被调 workflow 重新发布而刷新</strong>。Dify UI 也不提供指定调用版本的入口，所以"删除再添加"是当前唯一稳定的刷新手段。</td>
@@ -821,6 +835,9 @@ from datetime import datetime, timedelta
       <li>指令要给模型"禁止动作"，明确禁止项比罗列允许项更稳。</li>
       <li>渲染层（Markdown 表格里的图片）能力应作为链路验收证据之一。</li>
       <li>归档时把每个节点的 prompt / Code / 参数都原样保留下来，避免后续只能凭印象重建。</li>
+      <li>Agent 指令里同时存在上限（"≤40"）和下限（"=100"）类约束时，要明确哪个胜出；否则模型会在 reasoning 里消耗大量 token 做判断，挤占输出配额。</li>
+      <li>max_tokens 是 output 上限，不是 input 上限；想渲染 100 行长 markdown，必须把 max_tokens 调到接近完整内容所需 token（每件商品 ≈700 tokens × N + 工具返回 + reasoning）。</li>
+      <li>Dify 编辑器"自动保存"会写回前端 React state，API 层 patch 后 UI 可能仍显示旧值——每次改参数要二次确认草稿真值。</li>
     </ul>
 
     <h3>## V2.9 升级记录</h3>
